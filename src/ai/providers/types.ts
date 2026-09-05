@@ -37,6 +37,8 @@ export interface GenerateOptions {
   systemPrompt: string;
   messages: ChatMessage[];
   tools?: ToolDefinition[];
+  /** "required" forces the model to call some tool this turn instead of replying with text - which one is still its choice. Defaults to "auto". */
+  toolChoice?: "auto" | "required";
   maxOutputTokens?: number;
   temperature?: number;
 }

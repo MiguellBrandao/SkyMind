@@ -54,6 +54,7 @@ export class AnthropicProvider implements AIProvider {
         temperature: options.temperature ?? 0.4,
         messages: toAnthropicMessages(options.messages),
         tools: tools && tools.length > 0 ? tools : undefined,
+        tool_choice: options.toolChoice === "required" ? { type: "any" } : undefined,
       });
 
       const toolCalls: ToolCall[] = response.content

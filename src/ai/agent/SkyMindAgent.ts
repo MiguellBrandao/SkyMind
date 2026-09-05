@@ -51,8 +51,11 @@ const TOOL_DEFINITIONS: ToolDefinition[] = ALL_TOOLS.map((tool) => ({
 /**
  * Runs SkyMind's tool-calling agent loop: generate -> (if tool calls) execute -> feed results
  * back -> generate again, up to MAX_TOOL_ITERATIONS, then returns the final natural-language reply.
- * The model always sees the full tool list and decides for itself what to call and when -
- * simpler and more flexible than pre-filtering tools or forcing specific calls per message.
+ * The model always sees the full tool list and decides for itself what to call and when - except
+ * on the very first turn of every question, where it's required to call *some* tool before it's
+ * allowed to answer in plain text. Left fully to its own judgment, the model would sometimes skip
+ * tools entirely and answer confidently from stale/wrong memory instead - which tool(s) it calls
+ * is still entirely its own choice, this only rules out answering without checking anything first.
  */
 export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult> {
   const { provider, model } = await resolveProviderForUser(options.discordUserId);
@@ -63,7 +66,8 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   const toolsUsed: string[] = [];
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-    const result = await provider.generate({ model, systemPrompt, messages, tools: TOOL_DEFINITIONS });
+    const toolChoice = iteration === 0 ? "required" : "auto";
+    const result = await provider.generate({ model, systemPrompt, messages, tools: TOOL_DEFINITIONS, toolChoice });
 
     if (result.finishReason !== "tool_calls" || result.toolCalls.length === 0) {
       return {

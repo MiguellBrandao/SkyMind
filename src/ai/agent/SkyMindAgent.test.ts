@@ -100,4 +100,17 @@ describe("runAgent", () => {
     const [callArgs] = mockGenerate.mock.calls[0] as [{ systemPrompt: string }];
     expect(callArgs.systemPrompt).toContain("not linked");
   });
+
+  it("requires a tool call on the first turn but not on later turns, regardless of the message", async () => {
+    mockGenerate
+      .mockResolvedValueOnce({ content: null, toolCalls: [{ id: "call1", name: "fake_tool", arguments: {} }], finishReason: "tool_calls" })
+      .mockResolvedValueOnce({ content: "Done using the tool.", toolCalls: [], finishReason: "stop" });
+
+    await runAgent({ discordUserId: "u1", userMessage: "hi", history: [], toolContext: { discordUserId: "u1" } });
+
+    const [firstCallArgs] = mockGenerate.mock.calls[0] as [{ toolChoice?: string }];
+    const [secondCallArgs] = mockGenerate.mock.calls[1] as [{ toolChoice?: string }];
+    expect(firstCallArgs.toolChoice).toBe("required");
+    expect(secondCallArgs.toolChoice).toBe("auto");
+  });
 });
