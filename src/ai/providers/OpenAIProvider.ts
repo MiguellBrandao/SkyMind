@@ -47,7 +47,7 @@ export class OpenAIProvider implements AIProvider {
         model: options.model,
         messages,
         tools: tools && tools.length > 0 ? tools : undefined,
-        tool_choice: options.toolChoice === "required" ? "required" : undefined,
+        tool_choice: options.forceToolName ? { type: "function", function: { name: options.forceToolName } } : undefined,
         temperature: options.temperature ?? 0.4,
         max_tokens: options.maxOutputTokens ?? 2048,
       });

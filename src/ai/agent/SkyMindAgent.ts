@@ -9,6 +9,12 @@ import { logger } from "../../utils/logger";
 
 const MAX_TOOL_ITERATIONS = 5;
 
+/**
+ * The tool call every question is required to start with - see the note on FIRST_TURN_FORCED_TOOL
+ * usage below for why "require some tool call" alone wasn't enough.
+ */
+const FIRST_TURN_FORCED_TOOL = "search_skyblock_knowledge";
+
 export interface AgentRunOptions {
   discordUserId: string;
   userMessage: string;
@@ -51,11 +57,15 @@ const TOOL_DEFINITIONS: ToolDefinition[] = ALL_TOOLS.map((tool) => ({
 /**
  * Runs SkyMind's tool-calling agent loop: generate -> (if tool calls) execute -> feed results
  * back -> generate again, up to MAX_TOOL_ITERATIONS, then returns the final natural-language reply.
- * The model always sees the full tool list and decides for itself what to call and when - except
- * on the very first turn of every question, where it's required to call *some* tool before it's
- * allowed to answer in plain text. Left fully to its own judgment, the model would sometimes skip
- * tools entirely and answer confidently from stale/wrong memory instead - which tool(s) it calls
- * is still entirely its own choice, this only rules out answering without checking anything first.
+ *
+ * Every question's first turn is required to call search_skyblock_knowledge specifically, not just
+ * "some" tool - requiring any tool call was tried first and wasn't enough: the model would satisfy
+ * it with something else entirely reasonable-looking (e.g. fetching the player's own gear) and
+ * then, free to choose again afterward, still never actually check the wiki for build/meta
+ * questions - answering confidently from stale/wrong training memory regardless. This is still
+ * unconditional (applies to every question, not keyword-matched on the message), and only affects
+ * the first turn - what it does with the search results, and whether it calls anything else
+ * afterward (e.g. the player's own profile), is entirely its own judgment.
  */
 export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult> {
   const { provider, model } = await resolveProviderForUser(options.discordUserId);
@@ -66,8 +76,8 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   const toolsUsed: string[] = [];
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-    const toolChoice = iteration === 0 ? "required" : "auto";
-    const result = await provider.generate({ model, systemPrompt, messages, tools: TOOL_DEFINITIONS, toolChoice });
+    const forceToolName = iteration === 0 ? FIRST_TURN_FORCED_TOOL : undefined;
+    const result = await provider.generate({ model, systemPrompt, messages, tools: TOOL_DEFINITIONS, forceToolName });
 
     if (result.finishReason !== "tool_calls" || result.toolCalls.length === 0) {
       return {

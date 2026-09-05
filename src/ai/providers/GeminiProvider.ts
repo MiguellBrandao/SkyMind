@@ -58,7 +58,9 @@ export class GeminiProvider implements AIProvider {
         config: {
           systemInstruction: options.systemPrompt,
           tools,
-          toolConfig: options.toolChoice === "required" ? { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY } } : undefined,
+          toolConfig: options.forceToolName
+            ? { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: [options.forceToolName] } }
+            : undefined,
           temperature: options.temperature ?? 0.4,
           maxOutputTokens: options.maxOutputTokens ?? 2048,
         },
