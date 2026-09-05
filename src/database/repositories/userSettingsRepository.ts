@@ -50,35 +50,6 @@ export const userSettingsRepository = {
       .where(eq(userSettings.discordUserId, discordUserId));
   },
 
-  async upsertMemory(params: { discordUserId: string; preferredClass?: string | null; goals?: string | null; budget?: string | null }): Promise<UserSettings> {
-    const now = new Date();
-    const existing = await this.find(params.discordUserId);
-    const rows = await db
-      .insert(userSettings)
-      .values({
-        discordUserId: params.discordUserId,
-        aiProvider: existing?.aiProvider ?? "default",
-        preferredClass: params.preferredClass ?? existing?.preferredClass ?? null,
-        goals: params.goals ?? existing?.goals ?? null,
-        budget: params.budget ?? existing?.budget ?? null,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: userSettings.discordUserId,
-        set: {
-          preferredClass: params.preferredClass ?? existing?.preferredClass ?? null,
-          goals: params.goals ?? existing?.goals ?? null,
-          budget: params.budget ?? existing?.budget ?? null,
-          updatedAt: now,
-        },
-      })
-      .returning();
-    const row = rows[0];
-    if (!row) throw new Error("Failed to upsert user memory");
-    return row;
-  },
-
   async deleteAllUserData(discordUserId: string): Promise<void> {
     await db.delete(userSettings).where(eq(userSettings.discordUserId, discordUserId));
   },

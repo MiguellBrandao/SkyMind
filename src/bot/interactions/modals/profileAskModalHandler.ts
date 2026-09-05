@@ -26,8 +26,8 @@ export async function handleProfileAskModal(interaction: ModalSubmitInteraction)
     }
 
     const toolContext = await buildToolContext(interaction.user.id);
-    const { messages, memory } = await loadConversationContext(interaction.user.id);
-    const result = await runAgent({ discordUserId: interaction.user.id, userMessage: contextualMessage, history: messages, toolContext, memory });
+    const history = await loadConversationContext(interaction.user.id);
+    const result = await runAgent({ discordUserId: interaction.user.id, userMessage: contextualMessage, history, toolContext });
     await recordTurn(interaction.user.id, contextualMessage, result.reply);
 
     const reply = result.reply.length > DISCORD_MESSAGE_LIMIT ? `${result.reply.slice(0, DISCORD_MESSAGE_LIMIT)}...` : result.reply;

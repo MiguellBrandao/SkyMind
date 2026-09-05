@@ -243,7 +243,6 @@ protected `GET /admin/health` / `GET /admin/stats` (set `ADMIN_API_TOKEN` to ena
 | `/stats [ign]` | Detailed skill/dungeon-class/slayer breakdown |
 | `/ask <message>` | Ask SkyMind's AI agent anything about SkyBlock - including full progression analysis (the `analyze_profile` tool covers what a dedicated `/analyze` command used to) |
 | `/settings ai` | Choose your AI provider (Default/Gemini/OpenAI/Anthropic/Custom) via a select menu + modal |
-| `/settings memory` | Tell SkyMind your preferred class/goals/budget for future conversations |
 | `/settings delete-data` | Permanently delete everything SkyMind stored about you |
 | `/admin cache\|knowledge\|stats\|ai\|maintenance` | Administrator tools (see below) |
 

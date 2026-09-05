@@ -1,4 +1,4 @@
-import { buildSystemPrompt, type UserMemory } from "../prompts/systemPrompt";
+import { BASE_SYSTEM_PROMPT } from "../prompts/systemPrompt";
 import type { ChatMessage, ToolCall, ToolDefinition } from "../providers/types";
 import { resolveProviderForUser } from "../providers/ProviderFactory";
 import { selectRelevantTools, TOOLS_BY_NAME } from "../tools/registry";
@@ -14,7 +14,6 @@ export interface AgentRunOptions {
   userMessage: string;
   history: ChatMessage[];
   toolContext: ToolContext;
-  memory?: UserMemory;
 }
 
 export interface AgentRunResult {
@@ -49,7 +48,7 @@ async function executeTool(call: ToolCall, availableTools: AnyTool[], ctx: ToolC
  */
 export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult> {
   const { provider, model } = await resolveProviderForUser(options.discordUserId);
-  const systemPrompt = buildSystemPrompt(options.memory);
+  const systemPrompt = BASE_SYSTEM_PROMPT;
 
   const relevantTools = selectRelevantTools(options.userMessage, Boolean(options.toolContext.linkedAccount));
   const toolDefinitions: ToolDefinition[] = relevantTools.map((tool) => ({

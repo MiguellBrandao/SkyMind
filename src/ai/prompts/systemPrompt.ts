@@ -29,22 +29,3 @@ Critical honesty rules:
 - If the user isn't linked and asks about "my" account, tell them to run /link, or ask for their IGN directly for a one-off lookup.
 
 Tone: concise, knowledgeable, and practical - like an experienced SkyBlock player who actually checks the numbers before giving advice. Use SkyBlock terminology naturally, but don't be verbose for simple questions.`;
-
-export interface UserMemory {
-  preferredClass?: string | null;
-  goals?: string | null;
-  budget?: string | null;
-}
-
-export function buildSystemPrompt(memory?: UserMemory): string {
-  if (!memory || (!memory.preferredClass && !memory.goals && !memory.budget)) {
-    return BASE_SYSTEM_PROMPT;
-  }
-
-  const lines = ["", "Remembered context about this user from previous conversations (a preference, not live data - verify anything numeric via tools):"];
-  if (memory.preferredClass) lines.push(`- Preferred dungeon class: ${memory.preferredClass}`);
-  if (memory.goals) lines.push(`- Stated goals: ${memory.goals}`);
-  if (memory.budget) lines.push(`- Stated budget: ${memory.budget}`);
-
-  return `${BASE_SYSTEM_PROMPT}\n${lines.join("\n")}`;
-}

@@ -9,9 +9,6 @@ export const userSettings = pgTable("user_settings", {
   aiModel: varchar("ai_model", { length: 64 }),
   encryptedApiKey: text("encrypted_api_key"),
   customBaseUrl: text("custom_base_url"),
-  preferredClass: varchar("preferred_class", { length: 32 }),
-  goals: text("goals"),
-  budget: varchar("budget", { length: 64 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
