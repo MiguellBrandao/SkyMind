@@ -56,7 +56,8 @@ const TOOL_DEFINITIONS: ToolDefinition[] = ALL_TOOLS.map((tool) => ({
  */
 export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult> {
   const { provider, model } = await resolveProviderForUser(options.discordUserId);
-  const systemPrompt = BASE_SYSTEM_PROMPT;
+  const linkedAccount = options.toolContext.linkedAccount;
+  const systemPrompt = `${BASE_SYSTEM_PROMPT}\n\nThe calling user's linked Minecraft account: ${linkedAccount ? `${linkedAccount.minecraftUsername} (already linked - call profile tools with no "ign" argument to use it, no need to ask for it or call get_linked_account first)` : "none - not linked. If they ask about \"their\" account, ask for their IGN or point them to /link."}`;
 
   const messages: ChatMessage[] = [...options.history, { role: "user", content: options.userMessage }];
   const toolsUsed: string[] = [];

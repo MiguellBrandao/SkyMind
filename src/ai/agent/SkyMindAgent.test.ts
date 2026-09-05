@@ -81,4 +81,23 @@ describe("runAgent", () => {
     expect(result.reply).toBe("Fallback answer.");
     expect(fakeTool.handler).not.toHaveBeenCalled();
   });
+
+  it("tells the model the calling user's linked IGN so it doesn't need to ask for it", async () => {
+    mockGenerate.mockResolvedValueOnce({ content: "answer", toolCalls: [], finishReason: "stop" });
+
+    const linkedAccount = { minecraftUsername: "Kiwi123" } as never;
+    await runAgent({ discordUserId: "u1", userMessage: "best setup for m6 bers", history: [], toolContext: { discordUserId: "u1", linkedAccount } });
+
+    const [callArgs] = mockGenerate.mock.calls[0] as [{ systemPrompt: string }];
+    expect(callArgs.systemPrompt).toContain("Kiwi123");
+  });
+
+  it("tells the model when the calling user is not linked", async () => {
+    mockGenerate.mockResolvedValueOnce({ content: "answer", toolCalls: [], finishReason: "stop" });
+
+    await runAgent({ discordUserId: "u1", userMessage: "best setup for m6 bers", history: [], toolContext: { discordUserId: "u1" } });
+
+    const [callArgs] = mockGenerate.mock.calls[0] as [{ systemPrompt: string }];
+    expect(callArgs.systemPrompt).toContain("not linked");
+  });
 });
