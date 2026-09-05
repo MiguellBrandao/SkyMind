@@ -346,13 +346,15 @@ docker compose up -d --build
 ```
 
 This builds the app image (multi-stage `Dockerfile`) and runs it alongside Postgres and Redis. Set
-real values in `.env` first - `docker-compose.yml` reads it via `env_file`. Postgres/Redis ports
-are bound to `127.0.0.1` only (not exposed publicly); the `app` container reaches them over the
-internal Docker network regardless. For a managed deploy (Fly.io, Railway, a VPS via Dokploy/
-Coolify, etc.), point the platform at this repo's `docker-compose.yml`/`Dockerfile` and provide the
-same environment variables; make sure `npm run db:migrate` and `npm run deploy:commands` each run
-once (e.g. via the platform's one-off/exec command feature) after the first deploy, before relying
-on the bot. See [Deploying with Dokploy](#deploying-with-dokploy) for a concrete walkthrough.
+real values in `.env` first - `docker-compose.yml` reads it via `env_file`. Nothing is published to
+the host by default (see the comments in `docker-compose.yml`): the `app` container reaches
+Postgres/Redis over the internal Compose network by service name, and the bot itself needs no
+inbound port (it only makes outbound connections to Discord and Hypixel). For a managed deploy
+(Fly.io, Railway, a VPS via Dokploy/Coolify, etc.), point the platform at this repo's
+`docker-compose.yml`/`Dockerfile` and provide the same environment variables; make sure
+`npm run db:migrate:prod` and `npm run deploy:commands:prod` each run once (e.g. via the platform's
+one-off/exec command feature) after the first deploy, before relying on the bot. See
+[Deploying with Dokploy](#deploying-with-dokploy) for a concrete walkthrough.
 
 ---
 
@@ -373,17 +375,22 @@ no Dockerfile/Compose changes needed on your end.
    Dokploy injects these for all services in the compose file, so `app` picks them up automatically.
 6. Click **Deploy**. Dokploy will build the `app` image from the `Dockerfile` and start `postgres`,
    `redis`, and `app` together (no `--profile` flag needed - the compose file starts all three by
-   default now).
-7. **Run the one-off setup commands** once the containers are up. Open the `app` service's
-   **Terminal**/**Console** tab in Dokploy (or SSH into the VPS and `docker exec` into the running
-   `app` container) and run:
+   default now). No ports are published to the host, so this won't clash with Dokploy's own
+   dashboard or anything else already running on the VPS.
+7. **Run the one-off setup commands** once the containers are up (check the `app` service shows
+   "healthy" first). Open the `app` service's **Terminal**/**Console** tab in Dokploy (or SSH into
+   the VPS and `docker exec -it <container> bash`) - it opens at `/`, not the app directory, so
+   `cd /app` first. The production image only ships compiled JS (no `tsx`/dev dependencies), so run
+   the compiled versions rather than the `npm run db:migrate` / `npm run deploy:commands` names from
+   local dev:
    ```bash
-   npm run db:migrate
-   npm run deploy:commands
+   cd /app
+   npm run db:migrate:prod
+   npm run deploy:commands:prod
    ```
-   You only need to do this once (and again after any future schema change, for `db:migrate`).
-8. (Optional but recommended) In **Domains**, attach a domain/subdomain to the `app` service's port
-   `3000` if you want `GET /health` reachable from outside for uptime monitoring - the bot itself
+   You only need to do this once (and again after any future schema change, for `db:migrate:prod`).
+8. (Optional) In **Domains**, attach a domain/subdomain to the `app` service's internal port `3000`
+   if you want `GET /health` reachable from outside for uptime monitoring - the bot itself
    doesn't need a domain since Discord talks to it over an outbound WebSocket connection, not
    inbound HTTP.
 9. Check the `app` service's **Logs** tab: you should see `"SkyMind is online"` once it successfully
@@ -413,7 +420,8 @@ no Dockerfile/Compose changes needed on your end.
 ## Troubleshooting
 
 - **"Invalid environment configuration" on startup**: an env var is missing/malformed - the error message lists exactly which ones (Zod-validated in `src/config/env.ts`).
-- **Commands don't show up in Discord**: run `npm run deploy:commands`; global registration can take up to an hour, guild-scoped (`DISCORD_DEV_GUILD_ID`) is instant.
+- **Commands don't show up in Discord**: run `npm run deploy:commands` (local dev) or `npm run deploy:commands:prod` (inside a deployed container, which has no dev dependencies); global registration can take up to an hour, guild-scoped (`DISCORD_DEV_GUILD_ID`) is instant.
+- **`sh: 1: tsx: not found` inside a deployed container**: you ran the local-dev script name (`db:migrate`/`deploy:commands`) instead of the production one - the deployed image only ships compiled JS, not dev dependencies. Use `npm run db:migrate:prod` / `npm run deploy:commands:prod` instead.
 - **"Inventory API is disabled for this player"**: the player needs to enable it in-game (SkyBlock Menu -> Settings -> Socials & API) - this isn't a bot bug.
 - **Hypixel rate limit errors**: lower `HYPIXEL_RATE_LIMIT_PER_MINUTE`, or check `/admin cache` for current usage.
 - **Knowledge search returns nothing**: run `npm run knowledge:sync` at least once after a fresh database setup.

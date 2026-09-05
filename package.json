@@ -17,9 +17,12 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/database/migrate.ts",
+    "db:migrate:prod": "node dist/src/database/migrate.js",
     "db:studio": "drizzle-kit studio",
     "deploy:commands": "tsx src/bot/deploy-commands.ts",
-    "knowledge:sync": "tsx scripts/knowledge-sync.ts"
+    "deploy:commands:prod": "node dist/src/bot/deploy-commands.js",
+    "knowledge:sync": "tsx scripts/knowledge-sync.ts",
+    "knowledge:sync:prod": "node dist/scripts/knowledge-sync.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
