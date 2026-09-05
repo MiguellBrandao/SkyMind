@@ -2,7 +2,6 @@ import { SlashCommandBuilder, type ChatInputCommandInteraction } from "discord.j
 import { buildToolContext } from "../../ai/agent/contextBuilder";
 import { loadConversationContext, recordTurn } from "../../ai/agent/conversationMemory";
 import { runAgent } from "../../ai/agent/SkyMindAgent";
-import { SYSTEM_SETTING_KEYS, systemSettingsRepository } from "../../database/repositories/systemSettingsRepository";
 import { toUserMessage } from "../../utils/errors";
 import { chunkMessageText } from "../../utils/textChunking";
 import { buildErrorEmbed } from "../embeds/errorEmbed";
@@ -19,12 +18,6 @@ export const askCommand: SlashCommand = {
     const message = interaction.options.getString("message", true);
 
     try {
-      const maintenance = await systemSettingsRepository.get<boolean>(SYSTEM_SETTING_KEYS.botMaintenance, false);
-      if (maintenance) {
-        await interaction.editReply({ embeds: [buildErrorEmbed("SkyMind's AI features are temporarily under maintenance. Please try again later.")] });
-        return;
-      }
-
       const toolContext = await buildToolContext(interaction.user.id);
       const history = await loadConversationContext(interaction.user.id);
       const result = await runAgent({ discordUserId: interaction.user.id, userMessage: message, history, toolContext });

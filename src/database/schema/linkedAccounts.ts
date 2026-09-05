@@ -1,6 +1,6 @@
 import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
-export const verificationMethodValues = ["social_field", "code_challenge", "admin_override"] as const;
+export const verificationMethodValues = ["social_field", "code_challenge"] as const;
 export type VerificationMethod = (typeof verificationMethodValues)[number];
 
 export const linkedAccounts = pgTable(

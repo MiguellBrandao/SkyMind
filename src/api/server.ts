@@ -4,7 +4,6 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { env } from "../config/env";
 import { logger } from "../utils/logger";
 import { errorHandler } from "./middleware/errorHandler";
-import { registerAdminRoutes } from "./routes/admin";
 import { registerHealthRoutes } from "./routes/health";
 
 export async function startApiServer(): Promise<FastifyInstance> {
@@ -16,7 +15,6 @@ export async function startApiServer(): Promise<FastifyInstance> {
   app.setErrorHandler(errorHandler);
 
   await registerHealthRoutes(app);
-  await registerAdminRoutes(app);
 
   try {
     await app.listen({ port: env.API_PORT, host: env.API_HOST });

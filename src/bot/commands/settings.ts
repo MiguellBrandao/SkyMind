@@ -20,6 +20,7 @@ export const settingsCommand: SlashCommand = {
         .setDescription("Change which SkyBlock profile /profile, /stats, and /ask use by default")
         .addStringOption((opt) => opt.setName("profile").setDescription("Profile cute name, e.g. Kiwi").setRequired(true).setMaxLength(32)),
     )
+    .addSubcommand((sub) => sub.setName("clear-conversation").setDescription("Clear your AI conversation history with SkyMind (keeps your linked account and settings)"))
     .addSubcommand((sub) => sub.setName("delete-data").setDescription("Delete all data SkyMind has stored about you")),
 
   async execute(interaction: ChatInputCommandInteraction) {
@@ -51,6 +52,15 @@ export const settingsCommand: SlashCommand = {
       } catch (err) {
         await interaction.editReply({ embeds: [buildErrorEmbed(toUserMessage(err))] });
       }
+      return;
+    }
+
+    if (sub === "clear-conversation") {
+      await interaction.deferReply({ ephemeral: true });
+      await conversationRepository.clear(interaction.user.id);
+      await interaction.editReply({
+        embeds: [buildInfoEmbed("🧹 Conversation Cleared", "SkyMind's memory of your past `/ask` conversation has been wiped. Your linked account and settings are unaffected.")],
+      });
       return;
     }
 

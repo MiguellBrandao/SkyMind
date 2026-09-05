@@ -3,7 +3,6 @@ import { resolveIgnToUuid } from "../hypixel/client/mojangClient";
 import { discordTagMatchesUser, parsePlayerSummary } from "../hypixel/parsers/playerParser";
 import { linkedAccountRepository } from "../database/repositories/linkedAccountRepository";
 import { verificationRepository, VERIFICATION_TTL_MS } from "../database/repositories/verificationRepository";
-import { SYSTEM_SETTING_KEYS, systemSettingsRepository } from "../database/repositories/systemSettingsRepository";
 import { generateVerificationCode } from "../utils/crypto";
 import { VerificationError } from "../utils/errors";
 import { logger } from "../utils/logger";
@@ -20,14 +19,11 @@ export type LinkAttemptResult =
   | { status: "needs_code"; code: string; minecraftUsername: string; expiresInMinutes: number; profileNameNotFound?: string };
 
 async function assertUuidNotAlreadyLinkedElsewhere(minecraftUuid: string, discordUserId: string): Promise<void> {
-  const allowMultiLink = await systemSettingsRepository.get<boolean>(SYSTEM_SETTING_KEYS.allowMultiLink, false);
-  if (allowMultiLink) return;
-
   const otherLinks = await linkedAccountRepository.findOtherLinksForUuid(minecraftUuid, discordUserId);
   if (otherLinks.length > 0) {
     throw new VerificationError(
       `Minecraft UUID ${minecraftUuid} is already linked to a different Discord account`,
-      "This Minecraft account is already linked to a different Discord account. Ask a server admin if you believe this is a mistake.",
+      "This Minecraft account is already linked to a different Discord account. Run /unlink from that Discord account first if you meant to relink it here.",
     );
   }
 }
@@ -129,9 +125,5 @@ export const linkService = {
 
   async unlink(discordUserId: string): Promise<boolean> {
     return linkedAccountRepository.deleteByDiscordId(discordUserId);
-  },
-
-  async adminOverrideLink(discordUserId: string, uuid: string, username: string): Promise<LinkedAccount> {
-    return linkedAccountRepository.upsert({ discordUserId, minecraftUuid: uuid, minecraftUsername: username, verificationMethod: "admin_override" });
   },
 };

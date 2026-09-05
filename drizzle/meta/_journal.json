@@ -29,6 +29,13 @@
       "when": 1788644388284,
       "tag": "0003_drop_knowledge_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788651105074,
+      "tag": "0004_drop_system_settings",
+      "breakpoints": true
     }
   ]
 }

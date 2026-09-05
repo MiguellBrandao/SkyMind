@@ -1,6 +1,6 @@
 import { env } from "./env";
 
-export { env, adminUserIds } from "./env";
+export { env } from "./env";
 
 export const cacheTtl = {
   player: env.CACHE_TTL_PLAYER,

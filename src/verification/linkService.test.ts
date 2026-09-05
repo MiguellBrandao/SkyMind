@@ -1,16 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { VerificationError } from "../utils/errors";
 
-const {
-  mockGetPlayer,
-  mockResolveIgnToUuid,
-  mockFindOtherLinksForUuid,
-  mockUpsertLinkedAccount,
-  mockCreateVerification,
-  mockFindActiveForUser,
-  mockMarkConsumed,
-  mockSystemSettingGet,
-} = vi.hoisted(() => ({
+const { mockGetPlayer, mockResolveIgnToUuid, mockFindOtherLinksForUuid, mockUpsertLinkedAccount, mockCreateVerification, mockFindActiveForUser, mockMarkConsumed } = vi.hoisted(() => ({
   mockGetPlayer: vi.fn(),
   mockResolveIgnToUuid: vi.fn(),
   mockFindOtherLinksForUuid: vi.fn(),
@@ -18,7 +9,6 @@ const {
   mockCreateVerification: vi.fn(),
   mockFindActiveForUser: vi.fn(),
   mockMarkConsumed: vi.fn(),
-  mockSystemSettingGet: vi.fn(),
 }));
 
 vi.mock("../hypixel/client/HypixelClient", () => ({
@@ -42,10 +32,6 @@ vi.mock("../database/repositories/verificationRepository", () => ({
   },
   VERIFICATION_TTL_MS: 15 * 60 * 1000,
 }));
-vi.mock("../database/repositories/systemSettingsRepository", () => ({
-  systemSettingsRepository: { get: mockSystemSettingGet },
-  SYSTEM_SETTING_KEYS: { allowMultiLink: "allow_multi_link" },
-}));
 
 import { linkService } from "./linkService";
 
@@ -54,7 +40,6 @@ const discordIdentity = { username: "steve", discriminator: "0", globalName: "St
 describe("linkService.startLink", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSystemSettingGet.mockResolvedValue(false);
     mockFindOtherLinksForUuid.mockResolvedValue([]);
     mockResolveIgnToUuid.mockResolvedValue({ uuid: "uuid-1", username: "Steve" });
   });
@@ -91,7 +76,6 @@ describe("linkService.startLink", () => {
 describe("linkService.confirmCodeChallenge", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSystemSettingGet.mockResolvedValue(false);
     mockFindOtherLinksForUuid.mockResolvedValue([]);
   });
 

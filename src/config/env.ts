@@ -12,7 +12,6 @@ const envSchema = z.object({
   DISCORD_CLIENT_ID: z.string().min(1, "DISCORD_CLIENT_ID is required"),
   DISCORD_CLIENT_SECRET: z.string().optional().default(""),
   DISCORD_DEV_GUILD_ID: z.string().optional().default(""),
-  DISCORD_ADMIN_USER_IDS: z.string().optional().default(""),
 
   // Hypixel
   HYPIXEL_API_KEY: z.string().min(1, "HYPIXEL_API_KEY is required"),
@@ -54,7 +53,6 @@ const envSchema = z.object({
   // API server
   API_PORT: z.coerce.number().int().positive().default(3000),
   API_HOST: z.string().default("0.0.0.0"),
-  ADMIN_API_TOKEN: z.string().optional().default(""),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -71,9 +69,3 @@ function loadEnv(): Env {
 }
 
 export const env = loadEnv();
-
-export const adminUserIds = new Set(
-  env.DISCORD_ADMIN_USER_IDS.split(",")
-    .map((id) => id.trim())
-    .filter(Boolean),
-);

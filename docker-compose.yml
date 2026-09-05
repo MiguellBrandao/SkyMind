@@ -50,7 +50,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-skymind}:${POSTGRES_PASSWORD:-skymind}@postgres:5432/${POSTGRES_DB:-skymind}
       REDIS_URL: redis://redis:6379
     # Not published to the host: the bot itself only makes outbound connections (Discord
-    # gateway, Hypixel API), so it needs no inbound port. The Fastify health/admin API still
+    # gateway, Hypixel API), so it needs no inbound port. The Fastify health-check endpoint still
     # runs on API_PORT inside the container - if you want it reachable from outside, attach a
     # domain to this service in your hosting platform (e.g. Dokploy's Domains tab) pointing at
     # container port 3000, rather than publishing a host port here (which risks clashing with
