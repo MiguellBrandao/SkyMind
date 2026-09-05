@@ -8,6 +8,7 @@ import {
   hypixelAuctionsPageSchema,
   hypixelBazaarSchema,
   hypixelItemsResourceSchema,
+  hypixelMuseumSchema,
   hypixelPlayerAuctionsSchema,
   hypixelPlayerSchema,
   hypixelProfileSchema,
@@ -53,6 +54,14 @@ export const hypixelClient = {
       throw new NoSkyBlockProfileError(profileId);
     }
     return data.profile;
+  },
+
+  /** Museum items count toward net worth (skyhelper-networth) even though they're "donated" out of the inventory. */
+  async getMuseum(profileId: string) {
+    return getOrSetCache(cacheKeys.museum(profileId), cacheTtl.profile, async () => {
+      const raw = await hypixelRequest("skyblock/museum", { profile: profileId });
+      return hypixelMuseumSchema.parse(raw);
+    });
   },
 
   /** Returns the profile the player currently has selected in-game, or the most recently played one as a fallback. */

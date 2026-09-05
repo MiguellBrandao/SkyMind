@@ -1,4 +1,5 @@
-import { computeCategoryScores, estimateNetWorth, type CategoryScores } from "../calculations";
+import { computeCategoryScores, type CategoryScores } from "../calculations";
+import { calculateNetWorth } from "./networthService";
 import type { SkyblockProfileDetail } from "./profileService";
 
 export interface AnalysisFinding {
@@ -14,7 +15,7 @@ export interface ProfileAnalysis {
   catacombsLevel: number;
   magicalPower: number;
   estimatedNetWorth: number;
-  netWorthConfidence: "high" | "medium" | "low";
+  netWorthIncomplete: boolean;
   bottlenecks: AnalysisFinding[];
   upgrades: AnalysisFinding[];
 }
@@ -34,30 +35,18 @@ function averageRarityScore(rarities: (string | null)[]): number {
   return scored.reduce((a, b) => a + b, 0) / scored.length;
 }
 
-export interface PriceLookup {
-  (skyblockItemId: string): number | undefined;
-}
-
 /**
  * Deterministic, rule-based profile analysis: scoring + bottleneck/upgrade *directions*.
  * Deliberately does not fabricate specific item recommendations or prices beyond what can
  * be resolved from live market data - nuanced "buy X instead of Y" advice belongs to the AI
  * agent (analyze_profile tool), which can combine this output with search_skyblock_knowledge.
  */
-export function analyzeProfile(profile: SkyblockProfileDetail, priceLookup?: PriceLookup): ProfileAnalysis {
+export async function analyzeProfile(profile: SkyblockProfileDetail): Promise<ProfileAnalysis> {
   const armorRarities = profile.armor.map((item) => item.rarity);
   const equippedArmorCount = profile.armor.filter((item) => item.minecraftId !== null).length;
   const weapon = findLikelyWeapon(profile.inventory);
 
-  const netWorth = estimateNetWorth({
-    purseCoins: profile.purseCoins,
-    bankCoins: profile.bankCoins,
-    items: [...profile.inventory, ...profile.armor, ...profile.enderChest, ...profile.accessories].map((item) => ({
-      skyblockItemId: item.skyblockItemId,
-      count: item.count,
-    })),
-    priceLookup: priceLookup ?? (() => undefined),
-  });
+  const netWorth = await calculateNetWorth(profile);
 
   const scores = computeCategoryScores({
     combatSkillLevel: profile.skills.skills.combat?.level ?? 0,
@@ -68,7 +57,7 @@ export function analyzeProfile(profile: SkyblockProfileDetail, priceLookup?: Pri
     activePetLevel: profile.activePet?.level ?? null,
     activePetRarity: profile.activePet?.rarity ?? null,
     equipmentRarities: [...armorRarities, weapon?.rarity ?? null].filter((r): r is string => !!r),
-    estimatedNetWorth: netWorth.estimatedTotal,
+    estimatedNetWorth: netWorth.networth,
     skyblockLevel: profile.skyblockLevel,
     skillAverage: profile.skills.skillAverage,
   });
@@ -160,8 +149,8 @@ export function analyzeProfile(profile: SkyblockProfileDetail, priceLookup?: Pri
     skillAverage: profile.skills.skillAverage,
     catacombsLevel: profile.dungeons.catacombs.level,
     magicalPower: profile.magicalPower,
-    estimatedNetWorth: netWorth.estimatedTotal,
-    netWorthConfidence: netWorth.confidence,
+    estimatedNetWorth: netWorth.networth,
+    netWorthIncomplete: netWorth.incomplete,
     bottlenecks: bottlenecks.slice(0, 5),
     upgrades: upgrades.slice(0, 5),
   };

@@ -1,5 +1,4 @@
 import { hypixelClient } from "../../hypixel/client/HypixelClient";
-import type { BazaarProduct } from "../../hypixel/client/types";
 
 export interface BazaarPriceInfo {
   productId: string;
@@ -63,9 +62,5 @@ export const marketService = {
         bin: a.bin ?? false,
       })),
     };
-  },
-
-  buildBazaarPriceLookup(products: Record<string, BazaarProduct>): (skyblockItemId: string) => number | undefined {
-    return (skyblockItemId: string) => products[skyblockItemId.toUpperCase()]?.quick_status?.sellPrice;
   },
 };

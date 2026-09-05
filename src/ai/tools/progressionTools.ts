@@ -14,7 +14,7 @@ export const getPetsTool = defineTool({
   schema: z.object({ ign: ignParam }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);
-    const snapshot = await profileService.getSnapshot(target.uuid);
+    const snapshot = await profileService.getSnapshot(target.uuid, target.profileId);
     return { pets: snapshot.pets, activePet: snapshot.activePet, levelDisclaimer: "Pet levels are approximate estimates; SkyBlock's exact pet XP curve isn't exposed by the Hypixel API." };
   },
 });
@@ -26,7 +26,7 @@ export const getSkillsTool = defineTool({
   schema: z.object({ ign: ignParam }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);
-    const snapshot = await profileService.getSnapshot(target.uuid);
+    const snapshot = await profileService.getSnapshot(target.uuid, target.profileId);
     return snapshot.skills;
   },
 });
@@ -38,7 +38,7 @@ export const getDungeonsTool = defineTool({
   schema: z.object({ ign: ignParam }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);
-    const snapshot = await profileService.getSnapshot(target.uuid);
+    const snapshot = await profileService.getSnapshot(target.uuid, target.profileId);
     return snapshot.dungeons;
   },
 });
@@ -50,7 +50,7 @@ export const getCollectionsTool = defineTool({
   schema: z.object({ ign: ignParam }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);
-    const snapshot = await profileService.getSnapshot(target.uuid);
+    const snapshot = await profileService.getSnapshot(target.uuid, target.profileId);
     if (Object.keys(snapshot.rawCollections).length === 0) {
       return { apiEnabled: false, message: "Collections API is disabled for this player, or they have no collection progress." };
     }

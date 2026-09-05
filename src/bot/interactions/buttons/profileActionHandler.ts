@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, type ButtonInteraction } from "discord.js";
+import { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, type ButtonBuilder, type ButtonInteraction, type StringSelectMenuBuilder } from "discord.js";
 import { cacheKeys } from "../../../hypixel/cache/cacheKeys";
 import { invalidateCache } from "../../../hypixel/cache/cachedFetch";
 import { hypixelClient } from "../../../hypixel/client/HypixelClient";
@@ -9,7 +9,7 @@ import { logger } from "../../../utils/logger";
 import { buildErrorEmbed } from "../../embeds/errorEmbed";
 import { buildProfileEmbed } from "../../embeds/profileEmbed";
 import { buildStatsEmbed } from "../../embeds/statsEmbed";
-import { buildProfileActionRow } from "../components";
+import { buildProfileActionRow, buildProfileSelectRow } from "../components";
 
 export async function handleProfileAction(interaction: ButtonInteraction): Promise<void> {
   const parts = interaction.customId.split(":");
@@ -41,9 +41,20 @@ export async function handleProfileAction(interaction: ButtonInteraction): Promi
       return;
     }
 
-    const detail = await profileService.getDetail(uuid);
+    const [detail, profiles] = await Promise.all([profileService.getDetail(uuid), profileService.getProfileList(uuid)]);
     const extras = await getProfileOverviewExtras(detail);
-    await interaction.editReply({ embeds: [buildProfileEmbed(displayName, detail, { uuid, ...extras })], components: [buildProfileActionRow(uuid)] });
+
+    const components: (ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>)[] = [buildProfileActionRow(uuid)];
+    if (profiles.length > 1) {
+      components.push(
+        buildProfileSelectRow(
+          uuid,
+          profiles.map((p) => ({ profileId: p.profile_id, label: p.cute_name ?? p.profile_id, selected: p.profile_id === detail.profileId })),
+        ),
+      );
+    }
+
+    await interaction.editReply({ embeds: [buildProfileEmbed(displayName, detail, { uuid, ...extras })], components });
   } catch (err) {
     logger.error({ err, action }, "Profile action button failed");
     await interaction.editReply({ embeds: [buildErrorEmbed(toUserMessage(err))], components: [] });

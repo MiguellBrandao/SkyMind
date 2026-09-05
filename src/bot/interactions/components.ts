@@ -8,6 +8,20 @@ export function buildProfileActionRow(uuid: string): ActionRowBuilder<ButtonBuil
   );
 }
 
+export interface ProfileSelectOption {
+  profileId: string;
+  label: string;
+  selected: boolean;
+}
+
+export function buildProfileSelectRow(uuid: string, profiles: ProfileSelectOption[]): ActionRowBuilder<StringSelectMenuBuilder> {
+  const select = new StringSelectMenuBuilder()
+    .setCustomId(`profile:select-profile:${uuid}`)
+    .setPlaceholder("Switch SkyBlock profile")
+    .addOptions(profiles.slice(0, 25).map((p) => ({ label: p.label, value: p.profileId, default: p.selected })));
+  return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
+}
+
 export function buildLinkConfirmRow(): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder().setCustomId("link:confirm").setLabel("I've set the code - Confirm").setStyle(ButtonStyle.Success).setEmoji("✅"),

@@ -5,7 +5,13 @@ import { verificationCodes, type VerificationCode } from "../schema";
 const VERIFICATION_TTL_MS = 15 * 60 * 1000;
 
 export const verificationRepository = {
-  async create(params: { discordUserId: string; minecraftUuid: string; minecraftUsername: string; code: string }): Promise<VerificationCode> {
+  async create(params: {
+    discordUserId: string;
+    minecraftUuid: string;
+    minecraftUsername: string;
+    code: string;
+    desiredDefaultProfileId?: string | null;
+  }): Promise<VerificationCode> {
     const expiresAt = new Date(Date.now() + VERIFICATION_TTL_MS);
     const rows = await db
       .insert(verificationCodes)

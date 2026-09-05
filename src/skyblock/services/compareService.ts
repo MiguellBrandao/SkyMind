@@ -1,5 +1,5 @@
 import type { CategoryScores } from "../calculations";
-import { analyzeProfile, type PriceLookup } from "./profileAnalyzer";
+import { analyzeProfile } from "./profileAnalyzer";
 import type { SkyblockProfileDetail } from "./profileService";
 
 export interface ComparisonSide {
@@ -18,13 +18,8 @@ export interface ProfileComparison {
   leaderPerCategory: Record<keyof CategoryScores, "a" | "b" | "tie">;
 }
 
-export function compareProfiles(
-  a: { label: string; profile: SkyblockProfileDetail },
-  b: { label: string; profile: SkyblockProfileDetail },
-  priceLookup?: PriceLookup,
-): ProfileComparison {
-  const analysisA = analyzeProfile(a.profile, priceLookup);
-  const analysisB = analyzeProfile(b.profile, priceLookup);
+export async function compareProfiles(a: { label: string; profile: SkyblockProfileDetail }, b: { label: string; profile: SkyblockProfileDetail }): Promise<ProfileComparison> {
+  const [analysisA, analysisB] = await Promise.all([analyzeProfile(a.profile), analyzeProfile(b.profile)]);
 
   const sideA: ComparisonSide = {
     label: a.label,

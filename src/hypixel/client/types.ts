@@ -134,6 +134,14 @@ export const hypixelItemsResourceSchema = z.object({
 });
 export type HypixelItemsResourceResponse = z.infer<typeof hypixelItemsResourceSchema>;
 
+// Museum member shape is large/nested (donated items, borrowed items with NBT data) and is only
+// ever handed off wholesale to the skyhelper-networth library, so it's kept as an untyped passthrough.
+export const hypixelMuseumSchema = z.object({
+  success: z.boolean(),
+  members: z.record(z.string(), z.unknown()).optional(),
+});
+export type HypixelMuseumResponse = z.infer<typeof hypixelMuseumSchema>;
+
 export const mojangProfileSchema = z.object({
   id: z.string(),
   name: z.string(),

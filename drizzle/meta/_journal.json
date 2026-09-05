@@ -15,6 +15,13 @@
       "when": 1788626889578,
       "tag": "0001_strong_captain_marvel",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788628428689,
+      "tag": "0002_sweet_chameleon",
+      "breakpoints": true
     }
   ]
 }

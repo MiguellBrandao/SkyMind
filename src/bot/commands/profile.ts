@@ -1,10 +1,10 @@
-import { SlashCommandBuilder, type ChatInputCommandInteraction } from "discord.js";
+import { ActionRowBuilder, SlashCommandBuilder, type ButtonBuilder, type ChatInputCommandInteraction, type StringSelectMenuBuilder } from "discord.js";
 import { profileService } from "../../skyblock/services/profileService";
 import { getProfileOverviewExtras } from "../../skyblock/services/profileOverviewService";
 import { toUserMessage } from "../../utils/errors";
 import { buildErrorEmbed } from "../embeds/errorEmbed";
 import { buildProfileEmbed } from "../embeds/profileEmbed";
-import { buildProfileActionRow } from "../interactions/components";
+import { buildProfileActionRow, buildProfileSelectRow } from "../interactions/components";
 import { resolveCommandTarget } from "./resolveCommandTarget";
 import type { SlashCommand } from "./types";
 
@@ -18,11 +18,22 @@ export const profileCommand: SlashCommand = {
     await interaction.deferReply();
     try {
       const target = await resolveCommandTarget(interaction);
-      const detail = await profileService.getDetail(target.uuid);
+      const [detail, profiles] = await Promise.all([profileService.getDetail(target.uuid, target.profileId), profileService.getProfileList(target.uuid)]);
       const extras = await getProfileOverviewExtras(detail);
+
+      const components: (ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>)[] = [buildProfileActionRow(target.uuid)];
+      if (profiles.length > 1) {
+        components.push(
+          buildProfileSelectRow(
+            target.uuid,
+            profiles.map((p) => ({ profileId: p.profile_id, label: p.cute_name ?? p.profile_id, selected: p.profile_id === detail.profileId })),
+          ),
+        );
+      }
+
       await interaction.editReply({
         embeds: [buildProfileEmbed(target.username, detail, { uuid: target.uuid, ...extras })],
-        components: [buildProfileActionRow(target.uuid)],
+        components,
       });
     } catch (err) {
       await interaction.editReply({ embeds: [buildErrorEmbed(toUserMessage(err))] });

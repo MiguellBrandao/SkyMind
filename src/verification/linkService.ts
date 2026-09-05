@@ -16,8 +16,8 @@ export interface DiscordIdentity {
 }
 
 export type LinkAttemptResult =
-  | { status: "linked"; account: LinkedAccount }
-  | { status: "needs_code"; code: string; minecraftUsername: string; expiresInMinutes: number };
+  | { status: "linked"; account: LinkedAccount; profileNameNotFound?: string }
+  | { status: "needs_code"; code: string; minecraftUsername: string; expiresInMinutes: number; profileNameNotFound?: string };
 
 async function assertUuidNotAlreadyLinkedElsewhere(minecraftUuid: string, discordUserId: string): Promise<void> {
   const allowMultiLink = await systemSettingsRepository.get<boolean>(SYSTEM_SETTING_KEYS.allowMultiLink, false);
@@ -32,6 +32,17 @@ async function assertUuidNotAlreadyLinkedElsewhere(minecraftUuid: string, discor
   }
 }
 
+/** Resolves a profile "cute name" (e.g. "Kiwi") to its stable profile_id, case-insensitively. Returns null if not found. */
+async function resolveProfileIdByName(uuid: string, profileName: string): Promise<string | null> {
+  try {
+    const profiles = await hypixelClient.getProfiles(uuid);
+    return profiles.find((p) => p.cute_name?.toLowerCase() === profileName.toLowerCase())?.profile_id ?? null;
+  } catch (err) {
+    logger.warn({ err, uuid, profileName }, "Failed to resolve default profile name during link");
+    return null;
+  }
+}
+
 export const linkService = {
   /**
    * Primary flow: resolve IGN -> UUID, then check whether the player already has SkyMind's Discord
@@ -42,9 +53,12 @@ export const linkService = {
    * that same Hypixel Discord field to a bot-generated code, proving control over the Hypixel account's
    * settings without ever touching a password or API key.
    */
-  async startLink(discordUserId: string, ign: string, discordIdentity: DiscordIdentity): Promise<LinkAttemptResult> {
+  async startLink(discordUserId: string, ign: string, discordIdentity: DiscordIdentity, desiredProfileName?: string): Promise<LinkAttemptResult> {
     const { uuid, username } = await resolveIgnToUuid(ign);
     await assertUuidNotAlreadyLinkedElsewhere(uuid, discordUserId);
+
+    const desiredProfileId = desiredProfileName ? await resolveProfileIdByName(uuid, desiredProfileName) : null;
+    const profileNameNotFound = desiredProfileName && !desiredProfileId ? desiredProfileName : undefined;
 
     const rawPlayer = await hypixelClient.getPlayer(uuid);
     const player = parsePlayerSummary(rawPlayer);
@@ -56,13 +70,14 @@ export const linkService = {
         minecraftUsername: username,
         verificationMethod: "social_field",
       });
+      if (desiredProfileId) await linkedAccountRepository.setDefaultProfile(discordUserId, desiredProfileId);
       logger.info({ discordUserId, uuid }, "Account linked via social field match");
-      return { status: "linked", account };
+      return { status: "linked", account, profileNameNotFound };
     }
 
     const code = `SM-${generateVerificationCode()}`;
-    await verificationRepository.create({ discordUserId, minecraftUuid: uuid, minecraftUsername: username, code });
-    return { status: "needs_code", code, minecraftUsername: username, expiresInMinutes: VERIFICATION_TTL_MS / 60_000 };
+    await verificationRepository.create({ discordUserId, minecraftUuid: uuid, minecraftUsername: username, code, desiredDefaultProfileId: desiredProfileId });
+    return { status: "needs_code", code, minecraftUsername: username, expiresInMinutes: VERIFICATION_TTL_MS / 60_000, profileNameNotFound };
   },
 
   /** Confirms a pending code-challenge link by re-checking the Hypixel Discord social field for the code. */
@@ -91,12 +106,25 @@ export const linkService = {
       minecraftUsername: pending.minecraftUsername,
       verificationMethod: "code_challenge",
     });
+    if (pending.desiredDefaultProfileId) await linkedAccountRepository.setDefaultProfile(discordUserId, pending.desiredDefaultProfileId);
     logger.info({ discordUserId, uuid: pending.minecraftUuid }, "Account linked via code challenge");
     return account;
   },
 
   async getLinkedAccount(discordUserId: string): Promise<LinkedAccount | undefined> {
     return linkedAccountRepository.findByDiscordId(discordUserId);
+  },
+
+  /** Changes the linked account's default SkyBlock profile (used by /profile, /stats, /ask when no ign/profile is specified). */
+  async setDefaultProfile(discordUserId: string, profileName: string): Promise<{ success: boolean; account?: LinkedAccount }> {
+    const account = await linkedAccountRepository.findByDiscordId(discordUserId);
+    if (!account) throw new VerificationError("No linked account", "You haven't linked a Minecraft account yet. Use `/link` first.");
+
+    const profileId = await resolveProfileIdByName(account.minecraftUuid, profileName);
+    if (!profileId) return { success: false };
+
+    await linkedAccountRepository.setDefaultProfile(discordUserId, profileId);
+    return { success: true, account };
   },
 
   async unlink(discordUserId: string): Promise<boolean> {

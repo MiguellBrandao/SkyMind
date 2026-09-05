@@ -5,6 +5,7 @@ import { handleProfileAction } from "./buttons/profileActionHandler";
 import { handleUnlinkConfirm } from "./buttons/unlinkButtonHandler";
 import { handleProfileAskModal } from "./modals/profileAskModalHandler";
 import { handleSettingsAiModal } from "./modals/settingsAiModalHandler";
+import { handleProfileSelect } from "./selects/profileSelectHandler";
 import { handleSettingsAiSelect } from "./selects/settingsAiSelectHandler";
 
 export async function routeInteraction(interaction: Interaction): Promise<void> {
@@ -19,6 +20,7 @@ export async function routeInteraction(interaction: Interaction): Promise<void> 
 
     if (interaction.isStringSelectMenu()) {
       if (interaction.customId === "settings:ai-provider") return await handleSettingsAiSelect(interaction);
+      if (interaction.customId.startsWith("profile:select-profile:")) return await handleProfileSelect(interaction);
       return;
     }
 

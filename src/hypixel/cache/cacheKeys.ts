@@ -2,6 +2,7 @@ export const cacheKeys = {
   player: (uuid: string) => `hypixel:player:${uuid}`,
   profiles: (uuid: string) => `hypixel:profiles:${uuid}`,
   profile: (profileId: string) => `hypixel:profile:${profileId}`,
+  museum: (profileId: string) => `hypixel:museum:${profileId}`,
   bazaar: () => "hypixel:bazaar",
   auctionsPage: (page: number) => `hypixel:auctions:page:${page}`,
   auctionsIndex: () => "hypixel:auctions:index",

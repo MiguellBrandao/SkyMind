@@ -9,10 +9,10 @@ const profileNameParam = z.string().optional().describe("Optional profile cute n
 
 async function resolveProfileId(args: { ign?: string; profileName?: string }, ctx: Parameters<typeof resolveTarget>[1]) {
   const target = await resolveTarget(args, ctx);
-  if (!args.profileName) return { uuid: target.uuid, profileId: undefined };
+  if (!args.profileName) return { uuid: target.uuid, profileId: target.profileId };
   const profiles = await profileService.getProfileList(target.uuid);
   const match = profiles.find((p) => p.cute_name?.toLowerCase() === args.profileName?.toLowerCase());
-  return { uuid: target.uuid, profileId: match?.profile_id };
+  return { uuid: target.uuid, profileId: match?.profile_id ?? target.profileId };
 }
 
 export const getInventoryTool = defineTool({

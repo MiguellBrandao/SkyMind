@@ -47,6 +47,8 @@ export interface SkyblockProfileDetail extends SkyblockProfileSnapshot {
   equipment: SkyblockItem[];
   enderChest: SkyblockItem[];
   accessories: SkyblockItem[];
+  /** Raw Hypixel member object (profile.members[uuid]), needed by networthService's NBT-based calculator. */
+  rawMember: unknown;
 }
 
 function getMember(profile: SkyblockProfileEntry, uuid: string): unknown {
@@ -112,6 +114,6 @@ export const profileService = {
       parseAccessories(member),
     ]);
 
-    return { ...snapshot, inventory, armor, equipment, enderChest, accessories };
+    return { ...snapshot, inventory, armor, equipment, enderChest, accessories, rawMember: member };
   },
 };

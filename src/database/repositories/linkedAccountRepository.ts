@@ -53,6 +53,10 @@ export const linkedAccountRepository = {
     return row;
   },
 
+  async setDefaultProfile(discordUserId: string, profileId: string | null): Promise<void> {
+    await db.update(linkedAccounts).set({ defaultProfileId: profileId, updatedAt: new Date() }).where(eq(linkedAccounts.discordUserId, discordUserId));
+  },
+
   async deleteByDiscordId(discordUserId: string): Promise<boolean> {
     const rows = await db.delete(linkedAccounts).where(eq(linkedAccounts.discordUserId, discordUserId)).returning();
     return rows.length > 0;

@@ -17,7 +17,7 @@ export const statsCommand: SlashCommand = {
     await interaction.deferReply();
     try {
       const target = await resolveCommandTarget(interaction);
-      const snapshot = await profileService.getSnapshot(target.uuid);
+      const snapshot = await profileService.getSnapshot(target.uuid, target.profileId);
       await interaction.editReply({ embeds: [buildStatsEmbed(target.username, snapshot, target.uuid)], components: [buildProfileActionRow(target.uuid)] });
     } catch (err) {
       await interaction.editReply({ embeds: [buildErrorEmbed(toUserMessage(err))] });

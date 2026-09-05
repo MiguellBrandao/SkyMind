@@ -5,8 +5,8 @@ SkyMind is a production-oriented Discord bot that is an AI assistant **exclusive
 - Slash-command bot (discord.js v14) with buttons, select menus, and modals
 - Tool-calling AI agent (Gemini / OpenAI / Anthropic / any OpenAI-compatible endpoint) that only touches live data through typed tools - it never invents player stats
 - A dedicated, cached, rate-limited Hypixel API client (player, SkyBlock profiles, bazaar, auctions, resources)
-- A real profile analyzer with heuristic progression scoring, bottleneck detection, and net-worth estimation
-- A RAG knowledge base over the official Hypixel SkyBlock Wiki, stored in Postgres + pgvector
+- A real profile analyzer with heuristic progression scoring, bottleneck detection, and net worth computed via [`skyhelper-networth`](https://github.com/Altpapier/SkyHelper-Networth) (the same MIT-licensed library the SkyHelper bot uses)
+- A RAG knowledge base over the community-maintained Hypixel SkyBlock Wiki, stored in Postgres + pgvector
 - Secure, password-free account linking (Discord user ID <-> Minecraft UUID)
 
 ---
@@ -237,16 +237,17 @@ protected `GET /admin/health` / `GET /admin/stats` (set `ADMIN_API_TOKEN` to ena
 
 | Command | Description |
 |---|---|
-| `/link ign:<name>` | Link your Discord account to a Minecraft account (see below) |
+| `/link ign:<name> [profile]` | Link your Discord account to a Minecraft account, optionally setting a default SkyBlock profile (see below) |
 | `/unlink` | Unlink your Minecraft account (with confirmation) |
-| `/profile [ign]` | SkyBlock profile overview embed (level, net worth, slayers, collections, equipment) with Stats/Ask AI/Refresh buttons |
+| `/profile [ign]` | SkyBlock profile overview embed (level, real net worth, slayers, collections, equipment) with Stats/Ask AI/Refresh buttons, plus a profile-switcher dropdown if the account has more than one SkyBlock profile |
 | `/stats [ign]` | Detailed skill/dungeon-class/slayer breakdown |
 | `/ask <message>` | Ask SkyMind's AI agent anything about SkyBlock - including full progression analysis (the `analyze_profile` tool covers what a dedicated `/analyze` command used to) |
 | `/settings ai` | Choose your AI provider (Default/Gemini/OpenAI/Anthropic/Custom) via a select menu + modal |
+| `/settings default-profile profile:<name>` | Change which SkyBlock profile `/profile`, `/stats`, and `/ask` default to |
 | `/settings delete-data` | Permanently delete everything SkyMind stored about you |
 | `/admin cache\|knowledge\|stats\|ai\|maintenance` | Administrator tools (see below) |
 
-All account-linking and settings responses are ephemeral (only visible to the invoking user).
+All account-linking and settings responses are ephemeral (only visible to the invoking user). When a linked account has multiple SkyBlock profiles, `/profile`, `/stats`, and `/ask` use (in order): an explicit profile named in the request, the account's saved default profile (`/link`'s `profile` option or `/settings default-profile`), then Hypixel's own in-game "selected" profile.
 
 ---
 
@@ -272,6 +273,11 @@ ever establishes a mapping of `discord_user_id -> minecraft_uuid`.
 By default one Minecraft account can only be linked to one Discord account; an administrator can
 lift this via `/admin maintenance allow_multi_link:true`. `/unlink` and `/settings delete-data`
 remove the link (and, for delete-data, all other stored data) at any time.
+
+If you play more than one SkyBlock profile, `/link`'s optional `profile` option (e.g. `profile:Kiwi`)
+sets which one `/profile`, `/stats`, and `/ask` default to - change it anytime with
+`/settings default-profile profile:<name>`, or just switch the view for a single look with the
+dropdown under `/profile`'s embed.
 
 ---
 

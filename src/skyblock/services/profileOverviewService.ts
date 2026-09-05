@@ -1,29 +1,17 @@
 import { hypixelClient } from "../../hypixel/client/HypixelClient";
 import { computeCollectionTiers, countMaxedCollections, countTotalCollections } from "../../hypixel/parsers/collectionsParser";
-import { estimateNetWorth } from "../calculations";
-import { marketService } from "./marketService";
+import { calculateNetWorth } from "./networthService";
 import type { SkyblockProfileDetail } from "./profileService";
 
 export interface ProfileOverviewExtras {
   estimatedNetWorth: number;
-  netWorthConfidence: "high" | "medium" | "low";
+  netWorthIncomplete: boolean;
   collectionsSummary: { maxed: number; total: number } | null;
 }
 
-/** Cheap extras shown on the /profile overview card that need one extra Hypixel call (bazaar + collections resource, both cached). */
+/** Extras shown on the /profile overview card beyond the base snapshot/detail data. */
 export async function getProfileOverviewExtras(detail: SkyblockProfileDetail): Promise<ProfileOverviewExtras> {
-  const [bazaar, collectionsResource] = await Promise.all([hypixelClient.getBazaar(), hypixelClient.getResource("collections")]);
-
-  const priceLookup = marketService.buildBazaarPriceLookup(bazaar.products ?? {});
-  const netWorth = estimateNetWorth({
-    purseCoins: detail.purseCoins,
-    bankCoins: detail.bankCoins,
-    items: [...detail.inventory, ...detail.armor, ...detail.enderChest, ...detail.accessories].map((item) => ({
-      skyblockItemId: item.skyblockItemId,
-      count: item.count,
-    })),
-    priceLookup,
-  });
+  const [netWorth, collectionsResource] = await Promise.all([calculateNetWorth(detail), hypixelClient.getResource("collections")]);
 
   let collectionsSummary: { maxed: number; total: number } | null = null;
   if (Object.keys(detail.rawCollections).length > 0) {
@@ -32,8 +20,8 @@ export async function getProfileOverviewExtras(detail: SkyblockProfileDetail): P
   }
 
   return {
-    estimatedNetWorth: netWorth.estimatedTotal,
-    netWorthConfidence: netWorth.confidence,
+    estimatedNetWorth: netWorth.networth,
+    netWorthIncomplete: netWorth.incomplete,
     collectionsSummary,
   };
 }

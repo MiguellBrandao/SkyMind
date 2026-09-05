@@ -45,7 +45,7 @@ export const getSelectedProfileTool = defineTool({
   schema: z.object({ ign: ignParam }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);
-    return profileService.getSnapshot(target.uuid);
+    return profileService.getSnapshot(target.uuid, target.profileId);
   },
 });
 

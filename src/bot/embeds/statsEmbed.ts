@@ -1,6 +1,7 @@
 import { EmbedBuilder } from "discord.js";
 import type { SkyblockProfileSnapshot } from "../../skyblock/services/profileService";
 import { COLORS } from "./colors";
+import { CREDIT_LINE } from "./profileEmbed";
 import { DUNGEON_CLASS_ICON, SKILL_ICON, SLAYER_ICON, SLAYER_ORDER } from "./icons";
 import { getSkinAvatarUrl } from "./skinRender";
 
@@ -42,6 +43,7 @@ export function buildStatsEmbed(username: string, snapshot: SkyblockProfileSnaps
         value: classLines || "No class data",
       },
       { name: "🗡️ Slayers", value: slayerLines },
+      { name: "​", value: CREDIT_LINE },
     )
     .setTimestamp(snapshot.fetchedAt);
 }

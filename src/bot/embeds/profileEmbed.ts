@@ -46,15 +46,17 @@ function formatSlayers(slayers: ParsedSlayer[]): string {
 export interface ProfileEmbedExtras {
   uuid: string;
   estimatedNetWorth: number;
-  netWorthConfidence: "high" | "medium" | "low";
+  netWorthIncomplete: boolean;
   collectionsSummary: { maxed: number; total: number } | null;
 }
+
+export const CREDIT_LINE = "🔧 by [Miguelllb](https://github.com/MiguellBrandao)";
 
 export function buildProfileEmbed(username: string, detail: SkyblockProfileDetail, extras: ProfileEmbedExtras): EmbedBuilder {
   const armorSet = guessArmorSetName(detail.armor.map((a) => a.displayName));
   const weapon = findWeaponName(detail.inventory);
-  const combatLevel = detail.skills.skills.combat?.level ?? 0;
   const profileEmoji = getProfileEmoji(detail.cuteName);
+  const netWorthNote = extras.netWorthIncomplete ? " (Inventory API off - understated)" : "";
 
   const embed = new EmbedBuilder()
     .setColor(COLORS.primary)
@@ -68,7 +70,7 @@ export function buildProfileEmbed(username: string, detail: SkyblockProfileDetai
       { name: "✨ Magical Power", value: `${detail.magicalPower}`, inline: true },
       { name: "👛 Purse", value: `${formatCoins(detail.purseCoins)} coins`, inline: true },
       { name: "🏦 Bank", value: `${formatCoins(detail.bankCoins)} coins`, inline: true },
-      { name: "💎 Est. Net Worth", value: `${formatCoins(extras.estimatedNetWorth)} coins (${extras.netWorthConfidence} confidence)`, inline: true },
+      { name: "💎 Net Worth", value: `${formatCoins(extras.estimatedNetWorth)} coins${netWorthNote}`, inline: true },
       { name: "🗡️ Slayers", value: detail.slayers.length > 0 ? formatSlayers(detail.slayers) : "No slayer progress yet", inline: true },
       ...(extras.collectionsSummary
         ? [{ name: "📦 Collections Maxed", value: `${extras.collectionsSummary.maxed}/${extras.collectionsSummary.total}`, inline: true }]
@@ -77,9 +79,14 @@ export function buildProfileEmbed(username: string, detail: SkyblockProfileDetai
     .addFields({
       name: "⚔️ Equipment",
       value: [`Armor: ${armorSet ?? "Not detected"}`, `Weapon: ${weapon ?? "Not detected"}`, `Pet: ${detail.activePet ? `${detail.activePet.type} (${detail.activePet.rarity})` : "None active"}`].join("\n"),
-    })
-    .setFooter({ text: detail.inventoryApiEnabled ? "Inventory API: enabled" : "Inventory API: disabled - some data may be incomplete" })
-    .setTimestamp(detail.fetchedAt);
+    });
+
+  if (!detail.inventoryApiEnabled) {
+    embed.addFields({ name: "⚠️ Inventory API disabled", value: "Armor/weapon/pet/accessories/net worth may be incomplete for this player." });
+  }
+
+  embed.addFields({ name: "​", value: CREDIT_LINE });
+  embed.setTimestamp(detail.fetchedAt);
 
   return embed;
 }

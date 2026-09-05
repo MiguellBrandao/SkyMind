@@ -8,6 +8,8 @@ export const verificationCodes = pgTable(
     minecraftUuid: varchar("minecraft_uuid", { length: 32 }).notNull(),
     minecraftUsername: varchar("minecraft_username", { length: 16 }).notNull(),
     code: varchar("code", { length: 16 }).notNull(),
+    /** Profile the user asked to set as default via /link, carried through to confirmCodeChallenge(). */
+    desiredDefaultProfileId: varchar("desired_default_profile_id", { length: 64 }),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     consumedAt: timestamp("consumed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
