@@ -142,7 +142,7 @@ The knowledge base's embeddings use a separate, independently configurable provi
 
 ```env
 EMBEDDING_PROVIDER=gemini
-EMBEDDING_MODEL=text-embedding-004
+EMBEDDING_MODEL=gemini-embedding-001
 EMBEDDING_DIMENSIONS=768
 ```
 

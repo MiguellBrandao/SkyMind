@@ -1,38 +1,21 @@
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { GoogleGenAI, type Content, type FunctionDeclaration, type Part } from "@google/genai";
+import { aiConfig } from "../../config";
 import { AiProviderError } from "../../utils/errors";
 import { logger } from "../../utils/logger";
 import type { AIProvider, ChatMessage, GenerateOptions, GenerateResult, JsonSchema, ToolCall, ToolDefinition } from "./types";
 
-const GEMINI_TYPE_MAP: Record<string, SchemaType> = {
-  object: SchemaType.OBJECT,
-  string: SchemaType.STRING,
-  number: SchemaType.NUMBER,
-  boolean: SchemaType.BOOLEAN,
-  array: SchemaType.ARRAY,
-};
-
-function toGeminiSchema(schema: JsonSchema): Record<string, unknown> {
-  const result: Record<string, unknown> = { type: GEMINI_TYPE_MAP[schema.type ?? "string"] ?? SchemaType.STRING };
-  if (schema.description) result.description = schema.description;
-  if (schema.enum) result.enum = schema.enum.map(String);
-  if (schema.items) result.items = toGeminiSchema(schema.items);
-  if (schema.properties) {
-    result.properties = Object.fromEntries(Object.entries(schema.properties).map(([key, value]) => [key, toGeminiSchema(value)]));
-  }
-  if (schema.required) result.required = schema.required;
-  return result;
-}
-
-function toGeminiFunctionDeclarations(tools: ToolDefinition[]) {
+function toGeminiFunctionDeclarations(tools: ToolDefinition[]): FunctionDeclaration[] {
   return tools.map((tool) => ({
     name: tool.name,
     description: tool.description,
-    parameters: toGeminiSchema(tool.parameters),
+    // The current Gemini API (@google/genai) accepts a plain JSON Schema directly via
+    // parametersJsonSchema - no more translation to Google's uppercase-typed Schema format.
+    parametersJsonSchema: tool.parameters as JsonSchema,
   }));
 }
 
-function toGeminiContents(messages: ChatMessage[]) {
-  return messages.map((msg) => {
+function toGeminiContents(messages: ChatMessage[]): Content[] {
+  return messages.map((msg): Content => {
     if (msg.role === "user") {
       return { role: "user", parts: [{ text: msg.content }] };
     }
@@ -43,10 +26,12 @@ function toGeminiContents(messages: ChatMessage[]) {
       } catch {
         responseObj = { result: msg.content };
       }
-      return { role: "function", parts: [{ functionResponse: { name: msg.name ?? "tool", response: responseObj } }] };
+      // Function responses are sent back as role "user" per the current API contract (Content.role
+      // only accepts 'user' | 'model').
+      return { role: "user", parts: [{ functionResponse: { name: msg.name ?? "tool", response: responseObj } }] };
     }
     // assistant
-    const parts: Record<string, unknown>[] = [];
+    const parts: Part[] = [];
     if (msg.content) parts.push({ text: msg.content });
     for (const call of msg.toolCalls ?? []) {
       parts.push({ functionCall: { name: call.name, args: call.arguments } });
@@ -57,54 +42,44 @@ function toGeminiContents(messages: ChatMessage[]) {
 
 export class GeminiProvider implements AIProvider {
   readonly id = "gemini";
-  private readonly client: GoogleGenerativeAI;
+  private readonly client: GoogleGenAI;
 
   constructor(apiKey: string) {
-    this.client = new GoogleGenerativeAI(apiKey);
+    this.client = new GoogleGenAI({ apiKey });
   }
 
   async generate(options: GenerateOptions): Promise<GenerateResult> {
     try {
-      const model = this.client.getGenerativeModel({
+      const tools =
+        options.tools && options.tools.length > 0 ? [{ functionDeclarations: toGeminiFunctionDeclarations(options.tools) }] : undefined;
+
+      const response = await this.client.models.generateContent({
         model: options.model,
-        systemInstruction: options.systemPrompt,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        tools: options.tools && options.tools.length > 0 ? ([{ functionDeclarations: toGeminiFunctionDeclarations(options.tools) }] as any) : undefined,
-        generationConfig: {
+        contents: toGeminiContents(options.messages),
+        config: {
+          systemInstruction: options.systemPrompt,
+          tools,
           temperature: options.temperature ?? 0.4,
           maxOutputTokens: options.maxOutputTokens ?? 2048,
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const contents = toGeminiContents(options.messages) as any;
-      const result = await model.generateContent({ contents });
-      const response = result.response;
-
-      const functionCalls = response.functionCalls() ?? [];
+      const functionCalls = response.functionCalls ?? [];
       const toolCalls: ToolCall[] = functionCalls.map((call, index) => ({
-        id: `${call.name}-${index}-${Date.now()}`,
-        name: call.name,
+        id: call.id ?? `${call.name ?? "tool"}-${index}-${Date.now()}`,
+        name: call.name ?? "",
         arguments: (call.args as Record<string, unknown>) ?? {},
       }));
 
-      const text = (() => {
-        try {
-          return response.text();
-        } catch {
-          return "";
-        }
-      })();
-
-      const usage = response.usageMetadata
-        ? { inputTokens: response.usageMetadata.promptTokenCount, outputTokens: response.usageMetadata.candidatesTokenCount }
-        : undefined;
+      const text = response.text ?? "";
 
       return {
         content: text || null,
         toolCalls,
         finishReason: toolCalls.length > 0 ? "tool_calls" : "stop",
-        usage,
+        usage: response.usageMetadata
+          ? { inputTokens: response.usageMetadata.promptTokenCount, outputTokens: response.usageMetadata.candidatesTokenCount }
+          : undefined,
       };
     } catch (err) {
       logger.error({ err }, "Gemini generate() failed");
@@ -114,9 +89,12 @@ export class GeminiProvider implements AIProvider {
 
   async embed(texts: string[]): Promise<number[][]> {
     try {
-      const model = this.client.getGenerativeModel({ model: "text-embedding-004" });
-      const results = await Promise.all(texts.map((text) => model.embedContent(text)));
-      return results.map((r) => r.embedding.values);
+      const response = await this.client.models.embedContent({
+        model: aiConfig.embeddingModel,
+        contents: texts,
+        config: { outputDimensionality: aiConfig.embeddingDimensions },
+      });
+      return (response.embeddings ?? []).map((embedding) => embedding.values ?? []);
     } catch (err) {
       logger.error({ err }, "Gemini embed() failed");
       throw new AiProviderError("Gemini embedding request failed", { cause: err });

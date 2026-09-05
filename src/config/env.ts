@@ -38,7 +38,7 @@ const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional().default(""),
 
   EMBEDDING_PROVIDER: AiProviderEnum.default("gemini"),
-  EMBEDDING_MODEL: z.string().default("text-embedding-004"),
+  EMBEDDING_MODEL: z.string().default("gemini-embedding-001"),
   EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(768),
 
   // Cache TTLs
