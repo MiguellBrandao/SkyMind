@@ -22,7 +22,7 @@ const NOISE_SELECTORS = [
   ".hatnote",
 ];
 
-/** Extracts clean article text from a MediaWiki-rendered page (e.g. hypixelskyblock.minecraft.wiki), stripping navigation/edit-link noise. */
+/** Extracts clean article text from a MediaWiki-rendered page, stripping navigation/edit-link noise. */
 export function cleanMediaWikiHtml(html: string): CleanedDocument {
   const $ = cheerio.load(html);
   const title = $("#firstHeading").first().text().trim() || $("title").first().text().trim() || "Untitled";

@@ -22,6 +22,13 @@
       "when": 1788628428689,
       "tag": "0002_sweet_chameleon",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788644388284,
+      "tag": "0003_drop_knowledge_tables",
+      "breakpoints": true
     }
   ]
 }

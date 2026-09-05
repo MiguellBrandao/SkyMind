@@ -56,5 +56,4 @@ export interface GenerateResult {
 export interface AIProvider {
   readonly id: string;
   generate(options: GenerateOptions): Promise<GenerateResult>;
-  embed?(texts: string[]): Promise<number[][]>;
 }

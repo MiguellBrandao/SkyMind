@@ -1,5 +1,4 @@
 import { GoogleGenAI, type Content, type FunctionDeclaration, type Part } from "@google/genai";
-import { aiConfig } from "../../config";
 import { AiProviderError } from "../../utils/errors";
 import { logger } from "../../utils/logger";
 import type { AIProvider, ChatMessage, GenerateOptions, GenerateResult, JsonSchema, ToolCall, ToolDefinition } from "./types";
@@ -84,20 +83,6 @@ export class GeminiProvider implements AIProvider {
     } catch (err) {
       logger.error({ err }, "Gemini generate() failed");
       throw new AiProviderError("Gemini provider request failed", { cause: err });
-    }
-  }
-
-  async embed(texts: string[]): Promise<number[][]> {
-    try {
-      const response = await this.client.models.embedContent({
-        model: aiConfig.embeddingModel,
-        contents: texts,
-        config: { outputDimensionality: aiConfig.embeddingDimensions },
-      });
-      return (response.embeddings ?? []).map((embedding) => embedding.values ?? []);
-    } catch (err) {
-      logger.error({ err }, "Gemini embed() failed");
-      throw new AiProviderError("Gemini embedding request failed", { cause: err });
     }
   }
 }

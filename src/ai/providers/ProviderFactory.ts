@@ -77,14 +77,3 @@ export async function resolveProviderForUser(discordUserId: string): Promise<Res
       return { provider: buildDefaultProvider(), model: aiConfig.defaultModel, isUserProvided: false };
   }
 }
-
-/** Provider used exclusively for generating knowledge-base embeddings (ingestion + retrieval). */
-export function getEmbeddingProvider(): AIProvider {
-  switch (aiConfig.embeddingProvider) {
-    case "openai":
-      return new OpenAIProvider(aiConfig.openaiApiKey || aiConfig.defaultApiKey);
-    case "gemini":
-    default:
-      return new GeminiProvider(aiConfig.defaultApiKey);
-  }
-}

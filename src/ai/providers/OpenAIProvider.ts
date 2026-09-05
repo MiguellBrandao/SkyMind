@@ -69,14 +69,4 @@ export class OpenAIProvider implements AIProvider {
       throw new AiProviderError(`${this.id} provider request failed`, { cause: err });
     }
   }
-
-  async embed(texts: string[]): Promise<number[][]> {
-    try {
-      const response = await this.client.embeddings.create({ model: "text-embedding-3-small", input: texts });
-      return response.data.map((d) => d.embedding);
-    } catch (err) {
-      logger.error({ err }, `${this.id} embed() failed`);
-      throw new AiProviderError(`${this.id} embedding request failed`, { cause: err });
-    }
-  }
 }

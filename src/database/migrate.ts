@@ -4,12 +4,11 @@ import { db, pool, closeDatabase } from "./client";
 import { logger } from "../utils/logger";
 
 async function ensureExtensions(): Promise<void> {
-  await pool.query("CREATE EXTENSION IF NOT EXISTS vector;");
   await pool.query("CREATE EXTENSION IF NOT EXISTS pgcrypto;");
 }
 
 async function main(): Promise<void> {
-  logger.info("Ensuring required PostgreSQL extensions (vector, pgcrypto)...");
+  logger.info("Ensuring required PostgreSQL extensions (pgcrypto)...");
   await ensureExtensions();
 
   logger.info("Running database migrations...");

@@ -1,9 +1,7 @@
 import { PermissionFlagsBits, SlashCommandBuilder, type ChatInputCommandInteraction } from "discord.js";
 import { adminUserIds } from "../../config";
 import { linkedAccountRepository } from "../../database/repositories/linkedAccountRepository";
-import { knowledgeRepository } from "../../database/repositories/knowledgeRepository";
 import { SYSTEM_SETTING_KEYS, systemSettingsRepository } from "../../database/repositories/systemSettingsRepository";
-import { syncKnowledgeBase } from "../../skyblock/knowledge/ingestion/embeddingIndexer";
 import { getHealthReport } from "../../services/healthService";
 import { redis } from "../../services/redisClient";
 import { toUserMessage } from "../../utils/errors";
@@ -21,12 +19,7 @@ export const adminCommand: SlashCommand = {
     .setDescription("SkyMind administrator tools")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((sub) => sub.setName("cache").setDescription("Inspect cache and Hypixel rate-limit stats"))
-    .addSubcommand((sub) =>
-      sub
-        .setName("knowledge")
-        .setDescription("Inspect or trigger the SkyBlock knowledge base sync")
-        .addStringOption((opt) => opt.setName("action").setDescription("status or sync").addChoices({ name: "status", value: "status" }, { name: "sync", value: "sync" })),
-    )
+    .addSubcommand((sub) => sub.setName("knowledge").setDescription("Show which live SkyBlock knowledge sources are active"))
     .addSubcommand((sub) => sub.setName("stats").setDescription("Show bot-wide usage stats"))
     .addSubcommand((sub) => sub.setName("ai").setDescription("Show AI provider configuration/health"))
     .addSubcommand((sub) =>
@@ -64,30 +57,19 @@ export const adminCommand: SlashCommand = {
       }
 
       if (sub === "knowledge") {
-        const action = interaction.options.getString("action") ?? "status";
-        if (action === "sync") {
-          const results = await syncKnowledgeBase();
-          const created = results.filter((r) => r.status === "created").length;
-          const updated = results.filter((r) => r.status === "updated").length;
-          const unchanged = results.filter((r) => r.status === "unchanged").length;
-          const failed = results.filter((r) => r.status === "failed");
-          await interaction.editReply({
-            embeds: [
-              buildInfoEmbed(
-                "📚 Knowledge Sync Complete",
-                [
-                  `Created: ${created} | Updated: ${updated} | Unchanged: ${unchanged} | Failed: ${failed.length}`,
-                  ...failed.map((f) => `❌ ${f.url}: ${f.error}`),
-                ].join("\n"),
-              ),
-            ],
-          });
-          return;
-        }
-
-        const [docCount, chunkCount] = await Promise.all([knowledgeRepository.countDocuments(), knowledgeRepository.countChunks()]);
+        const health = await getHealthReport();
         await interaction.editReply({
-          embeds: [buildInfoEmbed("📚 Knowledge Base Status", `${docCount} documents indexed, ${chunkCount} chunks total.\nRun \`/admin knowledge action:sync\` to refresh.`)],
+          embeds: [
+            buildInfoEmbed(
+              "📚 Knowledge Sources",
+              [
+                "✅ SkyBlock Wiki (hypixelskyblock.minecraft.wiki) - always active, live search",
+                "✅ Hypixel SkyBlock Wiki (Fandom) - always active, live search",
+                `${health.knowledge.redditConfigured ? "✅" : "⚪"} Reddit r/HypixelSkyblock - ${health.knowledge.redditConfigured ? "active" : "not configured (set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET)"}`,
+                "⚪ Hypixel Forums - not available (no public search API; the forum's Cloudflare bot protection blocks anonymous search)",
+              ].join("\n"),
+            ),
+          ],
         });
         return;
       }
@@ -118,11 +100,7 @@ export const adminCommand: SlashCommand = {
           embeds: [
             buildInfoEmbed(
               "🧠 AI Provider Configuration",
-              [
-                `Default provider: **${health.ai.defaultProvider}** (${health.ai.defaultModel})`,
-                `Default key configured: ${health.ai.defaultKeyConfigured ? "✅" : "❌ MISSING"}`,
-                `Embedding provider: ${health.ai.embeddingProvider}`,
-              ].join("\n"),
+              [`Default provider: **${health.ai.defaultProvider}** (${health.ai.defaultModel})`, `Default key configured: ${health.ai.defaultKeyConfigured ? "✅" : "❌ MISSING"}`].join("\n"),
             ),
           ],
         });

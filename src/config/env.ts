@@ -37,9 +37,11 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().optional().default(""),
   ANTHROPIC_API_KEY: z.string().optional().default(""),
 
-  EMBEDDING_PROVIDER: AiProviderEnum.default("gemini"),
-  EMBEDDING_MODEL: z.string().default("gemini-embedding-001"),
-  EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(768),
+  // Optional: enables the Reddit r/HypixelSkyblock source in search_skyblock_knowledge. Without
+  // these, that source is silently skipped (wiki search still works). Create a free "script" app
+  // at https://www.reddit.com/prefs/apps to get a client ID/secret.
+  REDDIT_CLIENT_ID: z.string().optional().default(""),
+  REDDIT_CLIENT_SECRET: z.string().optional().default(""),
 
   // Cache TTLs
   CACHE_TTL_PLAYER: z.coerce.number().int().positive().default(900),

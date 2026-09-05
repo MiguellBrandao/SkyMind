@@ -25,4 +25,11 @@ describe("sanitizeRetrievedContent", () => {
     expect(result.length).toBeLessThan(2100);
     expect(result.endsWith("...")).toBe(true);
   });
+
+  it("respects a custom maxLength", () => {
+    const text = "a".repeat(500);
+    const result = sanitizeRetrievedContent(text, 100);
+    expect(result.length).toBe(103);
+    expect(result.endsWith("...")).toBe(true);
+  });
 });

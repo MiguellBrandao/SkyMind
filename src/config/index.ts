@@ -24,7 +24,4 @@ export const aiConfig = {
   defaultApiKey: env.DEFAULT_AI_API_KEY,
   openaiApiKey: env.OPENAI_API_KEY,
   anthropicApiKey: env.ANTHROPIC_API_KEY,
-  embeddingProvider: env.EMBEDDING_PROVIDER,
-  embeddingModel: env.EMBEDDING_MODEL,
-  embeddingDimensions: env.EMBEDDING_DIMENSIONS,
 } as const;
