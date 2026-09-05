@@ -28,8 +28,9 @@ SkyMind is a production-oriented Discord bot that is an AI assistant **exclusive
 13. [Admin tools](#admin-tools)
 14. [Testing](#testing)
 15. [Deployment](#deployment)
-16. [Security](#security)
-17. [Troubleshooting](#troubleshooting)
+16. [Deploying with Dokploy](#deploying-with-dokploy)
+17. [Security](#security)
+18. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -341,14 +342,56 @@ progression scoring), and knowledge retrieval/chunking/prompt-injection sanitiza
 ## Deployment
 
 ```bash
-docker compose --profile full up -d --build
+docker compose up -d --build
 ```
 
 This builds the app image (multi-stage `Dockerfile`) and runs it alongside Postgres and Redis. Set
-real values in `.env` first - `docker-compose.yml` reads it via `env_file`. For a managed deploy
-(Fly.io, Railway, a VPS, etc.), build the image and provide the same environment variables; make
-sure `npm run db:migrate` runs once against your production database before the bot starts serving
-traffic (a one-off job/init container is the cleanest way to do this).
+real values in `.env` first - `docker-compose.yml` reads it via `env_file`. Postgres/Redis ports
+are bound to `127.0.0.1` only (not exposed publicly); the `app` container reaches them over the
+internal Docker network regardless. For a managed deploy (Fly.io, Railway, a VPS via Dokploy/
+Coolify, etc.), point the platform at this repo's `docker-compose.yml`/`Dockerfile` and provide the
+same environment variables; make sure `npm run db:migrate` and `npm run deploy:commands` each run
+once (e.g. via the platform's one-off/exec command feature) after the first deploy, before relying
+on the bot. See [Deploying with Dokploy](#deploying-with-dokploy) for a concrete walkthrough.
+
+---
+
+## Deploying with Dokploy
+
+[Dokploy](https://dokploy.com) deploys this repo as-is using the included `docker-compose.yml` -
+no Dockerfile/Compose changes needed on your end.
+
+1. **Push this repo to GitHub** (or GitLab/Bitbucket) if it isn't already - Dokploy deploys from a
+   Git remote, not a local folder.
+2. In the Dokploy dashboard: **Projects -> Create Project** (e.g. "SkyMind").
+3. Inside the project: **Create Service -> Compose**.
+4. Under **General**, connect your Git provider (or paste the repo URL directly) and set:
+   - Branch: `main`
+   - Compose Path: `docker-compose.yml` (default location, at the repo root)
+5. Under **Environment**, paste the contents of your filled-in `.env` (every variable from
+   `.env.example`, with real values - see the setup sections above for where to get each key).
+   Dokploy injects these for all services in the compose file, so `app` picks them up automatically.
+6. Click **Deploy**. Dokploy will build the `app` image from the `Dockerfile` and start `postgres`,
+   `redis`, and `app` together (no `--profile` flag needed - the compose file starts all three by
+   default now).
+7. **Run the one-off setup commands** once the containers are up. Open the `app` service's
+   **Terminal**/**Console** tab in Dokploy (or SSH into the VPS and `docker exec` into the running
+   `app` container) and run:
+   ```bash
+   npm run db:migrate
+   npm run deploy:commands
+   ```
+   You only need to do this once (and again after any future schema change, for `db:migrate`).
+8. (Optional but recommended) In **Domains**, attach a domain/subdomain to the `app` service's port
+   `3000` if you want `GET /health` reachable from outside for uptime monitoring - the bot itself
+   doesn't need a domain since Discord talks to it over an outbound WebSocket connection, not
+   inbound HTTP.
+9. Check the `app` service's **Logs** tab: you should see `"SkyMind is online"` once it successfully
+   logs into Discord. Note that `docker-compose.yml`'s `app.environment` block always overrides
+   `DATABASE_URL`/`REDIS_URL` to point at the internal `postgres`/`redis` service names, regardless
+   of what's in the values you pasted from `.env.example` - so it's fine to paste them as-is.
+10. For future updates: push to `main` and hit **Redeploy** in Dokploy (or enable auto-deploy on
+    push in the service's Git settings).
 
 ---
 

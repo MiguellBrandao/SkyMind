@@ -3,15 +3,18 @@ services:
     image: pgvector/pgvector:pg16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: skymind
-      POSTGRES_PASSWORD: skymind
-      POSTGRES_DB: skymind
+      POSTGRES_USER: ${POSTGRES_USER:-skymind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-skymind}
+      POSTGRES_DB: ${POSTGRES_DB:-skymind}
+    # Bound to localhost only - reachable from the host machine (e.g. a DB GUI client during
+    # local dev) but never exposed to the public internet on a VPS. The `app` service always
+    # reaches this over the internal Docker network regardless of this mapping.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - skymind_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U skymind -d skymind"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-skymind} -d ${POSTGRES_DB:-skymind}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -20,7 +23,7 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - skymind_redis_data:/data
     healthcheck:
@@ -42,12 +45,10 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://skymind:skymind@postgres:5432/skymind
+      DATABASE_URL: postgresql://${POSTGRES_USER:-skymind}:${POSTGRES_PASSWORD:-skymind}@postgres:5432/${POSTGRES_DB:-skymind}
       REDIS_URL: redis://redis:6379
     ports:
       - "3000:3000"
-    profiles:
-      - full
 
 volumes:
   skymind_postgres_data:
