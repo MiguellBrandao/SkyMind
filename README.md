@@ -1,6 +1,6 @@
 # SkyMind
 
-SkyMind is a production-oriented Discord bot that is an AI assistant **exclusively** specialized in [Hypixel SkyBlock](https://wiki.hypixel.net/). It is not a general-purpose chatbot: every tool, prompt, calculation, and piece of retrieval-augmented knowledge is built around SkyBlock mechanics, live Hypixel API data, and SkyBlock-specific progression analysis.
+SkyMind is a production-oriented Discord bot that is an AI assistant **exclusively** specialized in [Hypixel SkyBlock](https://hypixel.net/). It is not a general-purpose chatbot: every tool, prompt, calculation, and piece of retrieval-augmented knowledge is built around SkyBlock mechanics, live Hypixel API data, and SkyBlock-specific progression analysis.
 
 - Slash-command bot (discord.js v14) with buttons, select menus, and modals
 - Tool-calling AI agent (Gemini / OpenAI / Anthropic / any OpenAI-compatible endpoint) that only touches live data through typed tools - it never invents player stats
@@ -280,7 +280,15 @@ remove the link (and, for delete-data, all other stored data) at any time.
 ## Knowledge sync (RAG)
 
 SkyMind answers SkyBlock-mechanics questions using retrieval-augmented generation over the
-official Hypixel SkyBlock Wiki (`wiki.hypixel.net`), not by stuffing the wiki into the prompt.
+Hypixel SkyBlock Wiki, not by stuffing the wiki into the prompt.
+
+> **Note:** Hypixel permanently shut down the *official* wiki (`wiki.hypixel.net`) in July 2026 -
+> it now just redirects to a forum announcement. SkyMind points at the community-maintained
+> successor instead, [hypixelskyblock.minecraft.wiki](https://hypixelskyblock.minecraft.wiki/)
+> (migrated from Fandom in April 2026, runs on the same Weird Gloop infrastructure as the official
+> Minecraft/RuneScape wikis). It's unofficial - Hypixel explicitly doesn't endorse any specific
+> community wiki - but is the actively-maintained source as of this writing. If it ever moves
+> again, update `src/skyblock/knowledge/ingestion/sources.ts` and `ALLOWED_INGESTION_HOSTS`.
 
 ```
 fetch (SSRF-guarded, size-capped, allowlisted hosts)
@@ -298,7 +306,7 @@ npm run knowledge:sync
 ```
 
 The seed source list lives in `src/skyblock/knowledge/ingestion/sources.ts` - add more
-`wiki.hypixel.net` pages there as needed. Re-running the sync is cheap: pages whose content hash
+`hypixelskyblock.minecraft.wiki` pages there as needed. Re-running the sync is cheap: pages whose content hash
 hasn't changed are skipped entirely (no re-embedding cost). For scheduled syncing, run
 `npm run knowledge:sync` from cron / a scheduled CI job / a process manager on whatever interval
 you like (the wiki doesn't change often; daily or weekly is plenty).
