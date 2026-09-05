@@ -18,7 +18,6 @@ async function resolveProfileId(args: { ign?: string; profileName?: string }, ct
 export const getInventoryTool = defineTool({
   name: "get_inventory",
   description: "Fetches the player's main inventory contents (requires the player's Inventory API setting to be enabled). Note: does not include armor, which is a separate slot.",
-  category: "inventory",
   schema: z.object({ ign: ignParam, profileName: profileNameParam }),
   handler: async (args, ctx) => {
     const { uuid, profileId } = await resolveProfileId(args, ctx);
@@ -33,7 +32,6 @@ export const getInventoryTool = defineTool({
 export const getEnderChestTool = defineTool({
   name: "get_ender_chest",
   description: "Fetches the player's Ender Chest contents (requires the player's Inventory API setting to be enabled).",
-  category: "inventory",
   schema: z.object({ ign: ignParam, profileName: profileNameParam }),
   handler: async (args, ctx) => {
     const { uuid, profileId } = await resolveProfileId(args, ctx);
@@ -48,7 +46,6 @@ export const getEnderChestTool = defineTool({
 export const getAccessoriesTool = defineTool({
   name: "get_accessories",
   description: "Fetches the player's Accessory Bag (talismans/rings/artifacts) contents and their current Magical Power.",
-  category: "inventory",
   schema: z.object({ ign: ignParam, profileName: profileNameParam }),
   handler: async (args, ctx) => {
     const { uuid, profileId } = await resolveProfileId(args, ctx);
@@ -63,7 +60,6 @@ export const getAccessoriesTool = defineTool({
 export const getEquipmentTool = defineTool({
   name: "get_equipment",
   description: "Fetches the player's Equipment slots (cloak, belt, gloves, necklace, bracelet) contents.",
-  category: "inventory",
   schema: z.object({ ign: ignParam, profileName: profileNameParam }),
   handler: async (args, ctx) => {
     const { uuid, profileId } = await resolveProfileId(args, ctx);

@@ -11,7 +11,6 @@ const ignParam = z.string().min(1).max(16).optional().describe("Minecraft userna
 export const getPlayerTool = defineTool({
   name: "get_player",
   description: "Fetches basic Hypixel player info (display name, karma, login history) for a Minecraft account. Does not include SkyBlock data.",
-  category: "player",
   schema: z.object({ ign: ignParam }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);
@@ -23,7 +22,6 @@ export const getPlayerTool = defineTool({
 export const getProfilesTool = defineTool({
   name: "get_profiles",
   description: "Lists all SkyBlock profiles (islands) for a player, including which one is currently selected in-game.",
-  category: "player",
   schema: z.object({ ign: ignParam }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);
@@ -40,8 +38,6 @@ export const getProfilesTool = defineTool({
 export const getSelectedProfileTool = defineTool({
   name: "get_selected_profile",
   description: "Fetches a summary (level, skills, dungeons, pets, coins, magical power) of the SkyBlock profile the player currently has selected in-game.",
-  category: "player",
-  alwaysInclude: true,
   schema: z.object({ ign: ignParam }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);
@@ -52,7 +48,6 @@ export const getSelectedProfileTool = defineTool({
 export const getSkyblockProfileTool = defineTool({
   name: "get_skyblock_profile",
   description: "Fetches a summary of a specific named SkyBlock profile (e.g. 'Kiwi', 'Papaya') for a player, instead of just their currently-selected one. Use when the user names a specific profile.",
-  category: "player",
   schema: z.object({
     ign: ignParam,
     profileName: z.string().min(1).describe("The profile's cute name, e.g. 'Kiwi' or 'Papaya' (case-insensitive)."),

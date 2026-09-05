@@ -6,14 +6,9 @@ export interface ToolContext {
   linkedAccount?: LinkedAccount | undefined;
 }
 
-export type ToolCategory = "account" | "player" | "inventory" | "progression" | "market" | "knowledge" | "calculation" | "analysis";
-
 export interface ToolDefinitionWithHandler<Schema extends z.ZodTypeAny = z.ZodTypeAny> {
   name: string;
   description: string;
-  category: ToolCategory;
-  /** Tools in this list are always offered to the model regardless of relevance filtering. */
-  alwaysInclude?: boolean;
   schema: Schema;
   handler: (args: z.infer<Schema>, ctx: ToolContext) => Promise<unknown>;
 }
@@ -30,8 +25,6 @@ export function defineTool<Schema extends z.ZodTypeAny>(tool: ToolDefinitionWith
 export interface AnyTool {
   name: string;
   description: string;
-  category: ToolCategory;
-  alwaysInclude?: boolean;
   schema: z.ZodTypeAny;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handler: (args: any, ctx: ToolContext) => Promise<unknown>;

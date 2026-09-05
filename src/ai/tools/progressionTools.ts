@@ -10,7 +10,6 @@ const ignParam = z.string().min(1).max(16).optional().describe("Minecraft userna
 export const getPetsTool = defineTool({
   name: "get_pets",
   description: "Lists all of a player's pets with their rarity, approximate level, and which one is currently active.",
-  category: "progression",
   schema: z.object({ ign: ignParam }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);
@@ -22,7 +21,6 @@ export const getPetsTool = defineTool({
 export const getSkillsTool = defineTool({
   name: "get_skills",
   description: "Fetches all skill levels (Farming, Mining, Combat, Foraging, Fishing, Enchanting, Alchemy, Taming, Carpentry, Runecrafting, Social) and the player's Skill Average.",
-  category: "progression",
   schema: z.object({ ign: ignParam }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);
@@ -34,7 +32,6 @@ export const getSkillsTool = defineTool({
 export const getDungeonsTool = defineTool({
   name: "get_dungeons",
   description: "Fetches Catacombs level, all dungeon class levels (Healer/Mage/Berserk/Archer/Tank), selected class, and secrets found.",
-  category: "progression",
   schema: z.object({ ign: ignParam }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);
@@ -46,7 +43,6 @@ export const getDungeonsTool = defineTool({
 export const getCollectionsTool = defineTool({
   name: "get_collections",
   description: "Fetches the player's collection progress (amount collected + tier unlocked) for every collection they've made progress in. Requires the player's Collections API setting to be enabled.",
-  category: "progression",
   schema: z.object({ ign: ignParam }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);

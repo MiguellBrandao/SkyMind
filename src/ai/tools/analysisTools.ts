@@ -12,7 +12,6 @@ export const analyzeProfileTool = defineTool({
   name: "analyze_profile",
   description:
     "Runs SkyMind's full profile analyzer on a player's SkyBlock profile: category progression scores (Combat, Dungeons, Accessories, Pets, Equipment, Economy, Progression), net worth, and ranked bottlenecks/upgrade directions. Use this for any 'how am I doing' / 'what should I improve' style question.",
-  category: "analysis",
   schema: z.object({ ign: ignParam, profileName: z.string().optional() }),
   handler: async (args, ctx) => {
     const target = await resolveTarget(args, ctx);
@@ -35,7 +34,6 @@ export const analyzeProfileTool = defineTool({
 export const compareProfilesTool = defineTool({
   name: "compare_profiles",
   description: "Compares two players' SkyBlock profiles side by side across every progression category. Use when the user asks to compare themselves to a friend, or compare two named players.",
-  category: "analysis",
   schema: z.object({
     ignA: z.string().min(1).max(16).describe("First player's IGN. If omitted elsewhere, this should be the primary subject."),
     ignB: z.string().min(1).max(16).describe("Second player's IGN to compare against."),

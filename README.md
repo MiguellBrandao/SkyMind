@@ -347,9 +347,9 @@ environment variables for the Zod-validated config are injected via `vitest.conf
 includes: the Hypixel HTTP client (retries/backoff/429/timeout), UUID resolution + fallback,
 account verification (both link flows), the Redis cache/dedup layer, the rate limiter, the AI
 provider abstraction (Zod->JSON-Schema conversion, the tool-calling agent loop against a fake
-provider), tool relevance selection, profile calculations (XP tables, EHP, damage, net worth,
-progression scoring), and the live knowledge search layer (MediaWiki search parsing, Reddit OAuth
-search, prompt-injection sanitization).
+provider), profile calculations (XP tables, EHP, damage, net worth, progression scoring), and the
+live knowledge search layer (MediaWiki search parsing, Reddit OAuth search, prompt-injection
+sanitization).
 
 ---
 

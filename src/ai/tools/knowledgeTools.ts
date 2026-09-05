@@ -60,8 +60,6 @@ export const searchSkyblockKnowledgeTool = defineTool({
   name: "search_skyblock_knowledge",
   description:
     "Searches live SkyBlock knowledge sources for up-to-date info on game mechanics, item effects, or formulas: the community-maintained SkyBlock Wiki and the Fandom mirror (both generally reliable, wiki-style), plus Reddit r/HypixelSkyblock discussion when configured (community opinion - can be outdated, wrong, or joking, never treat as verified fact). Use this whenever you're not 100% certain a mechanic detail is still accurate.",
-  category: "knowledge",
-  alwaysInclude: true,
   schema: z.object({
     query: z.string().min(3).describe("A focused search query, e.g. 'how does Magical Power work' or 'Catacombs floor 7 boss'."),
   }),

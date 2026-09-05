@@ -37,8 +37,6 @@ export interface GenerateOptions {
   systemPrompt: string;
   messages: ChatMessage[];
   tools?: ToolDefinition[];
-  /** When set, forces the model to call this exact tool this turn instead of freely choosing or replying with text. Must name a tool present in `tools`. */
-  forceToolName?: string;
   maxOutputTokens?: number;
   temperature?: number;
 }

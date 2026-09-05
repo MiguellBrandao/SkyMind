@@ -1,4 +1,4 @@
-import { FunctionCallingConfigMode, GoogleGenAI, type Content, type FunctionDeclaration, type Part } from "@google/genai";
+import { GoogleGenAI, type Content, type FunctionDeclaration, type Part } from "@google/genai";
 import { AiProviderError } from "../../utils/errors";
 import { logger } from "../../utils/logger";
 import type { AIProvider, ChatMessage, GenerateOptions, GenerateResult, JsonSchema, ToolCall, ToolDefinition } from "./types";
@@ -58,9 +58,6 @@ export class GeminiProvider implements AIProvider {
         config: {
           systemInstruction: options.systemPrompt,
           tools,
-          toolConfig: options.forceToolName
-            ? { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: [options.forceToolName] } }
-            : undefined,
           temperature: options.temperature ?? 0.4,
           maxOutputTokens: options.maxOutputTokens ?? 2048,
         },

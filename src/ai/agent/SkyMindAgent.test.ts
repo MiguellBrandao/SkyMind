@@ -2,16 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // A duck-typed stand-in for a Zod schema (just needs .parse()) - referencing the real `zod`
 // import from inside vi.hoisted() isn't safe, since vi.hoisted runs before imports initialize.
-const { mockGenerate, fakeTool, knowledgeTool } = vi.hoisted(() => {
-  const makeTool = (name: string) => ({
-    name,
-    description: `A fake tool named ${name}`,
-    category: "player" as const,
-    alwaysInclude: true,
+const { mockGenerate, fakeTool } = vi.hoisted(() => {
+  const tool = {
+    name: "fake_tool",
+    description: "A fake tool",
     schema: { parse: (args: unknown) => args },
-    handler: vi.fn(async () => ({ result: `${name}-output` })),
-  });
-  return { mockGenerate: vi.fn(), fakeTool: makeTool("fake_tool"), knowledgeTool: makeTool("search_skyblock_knowledge") };
+    handler: vi.fn(async () => ({ result: "tool-output" })),
+  };
+  return { mockGenerate: vi.fn(), fakeTool: tool };
 });
 
 vi.mock("../providers/ProviderFactory", () => ({
@@ -19,11 +17,8 @@ vi.mock("../providers/ProviderFactory", () => ({
 }));
 
 vi.mock("../tools/registry", () => ({
-  selectRelevantTools: () => [fakeTool, knowledgeTool],
-  TOOLS_BY_NAME: new Map([
-    ["fake_tool", fakeTool],
-    ["search_skyblock_knowledge", knowledgeTool],
-  ]),
+  ALL_TOOLS: [fakeTool],
+  TOOLS_BY_NAME: new Map([["fake_tool", fakeTool]]),
 }));
 
 import { runAgent } from "./SkyMindAgent";
@@ -33,8 +28,6 @@ describe("runAgent", () => {
     mockGenerate.mockReset();
     fakeTool.handler.mockReset();
     fakeTool.handler.mockResolvedValue({ result: "tool-output" });
-    knowledgeTool.handler.mockReset();
-    knowledgeTool.handler.mockResolvedValue({ result: "knowledge-output" });
   });
 
   it("returns the final content directly when the model doesn't request tool calls", async () => {
@@ -76,30 +69,6 @@ describe("runAgent", () => {
     const result = await runAgent({ discordUserId: "u1", userMessage: "use the tool", history: [], toolContext: { discordUserId: "u1" } });
 
     expect(result.reply).toBe("Handled the error gracefully.");
-  });
-
-  it("forces the knowledge-search tool on the first turn for a recommendation-style question", async () => {
-    mockGenerate
-      .mockResolvedValueOnce({ content: null, toolCalls: [{ id: "call1", name: "search_skyblock_knowledge", arguments: { query: "m7 bers" } }], finishReason: "tool_calls" })
-      .mockResolvedValueOnce({ content: "Here's the current meta.", toolCalls: [], finishReason: "stop" });
-
-    const result = await runAgent({ discordUserId: "u1", userMessage: "whats the best setup for m7 bers", history: [], toolContext: { discordUserId: "u1" } });
-
-    const [firstCallArgs] = mockGenerate.mock.calls[0] as [{ forceToolName?: string }];
-    const [secondCallArgs] = mockGenerate.mock.calls[1] as [{ forceToolName?: string }];
-    expect(firstCallArgs.forceToolName).toBe("search_skyblock_knowledge");
-    expect(secondCallArgs.forceToolName).toBeUndefined();
-    expect(knowledgeTool.handler).toHaveBeenCalledTimes(1);
-    expect(result.reply).toBe("Here's the current meta.");
-  });
-
-  it("does not force any tool for an ordinary question", async () => {
-    mockGenerate.mockResolvedValueOnce({ content: "Hi there.", toolCalls: [], finishReason: "stop" });
-
-    await runAgent({ discordUserId: "u1", userMessage: "hi", history: [], toolContext: { discordUserId: "u1" } });
-
-    const [callArgs] = mockGenerate.mock.calls[0] as [{ forceToolName?: string }];
-    expect(callArgs.forceToolName).toBeUndefined();
   });
 
   it("returns 'unknown tool' output rather than crashing when the model hallucinates a tool name", async () => {
