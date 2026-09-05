@@ -2,25 +2,22 @@ import type { StringSelectMenuInteraction } from "discord.js";
 import { toUserMessage } from "../../../utils/errors";
 import { logger } from "../../../utils/logger";
 import { buildErrorEmbed } from "../../embeds/errorEmbed";
-import type { ProfileCardView } from "../components";
 import { editReplyWithExpiry } from "../componentExpiry";
-import { buildProfileCard } from "../profileCard";
+import { buildNetworthCard } from "../networthCard";
 
-/** Re-renders the current /profile or /stats card for a different SkyBlock profile the player owns. */
-export async function handleProfileSelect(interaction: StringSelectMenuInteraction): Promise<void> {
+export async function handleNetworthSelect(interaction: StringSelectMenuInteraction): Promise<void> {
   const parts = interaction.customId.split(":");
   const uuid = parts[2];
-  const view: ProfileCardView = parts[3] === "stats" ? "stats" : "profile";
   const profileId = interaction.values[0];
   if (!uuid || !profileId) return;
 
   await interaction.deferUpdate();
 
   try {
-    const message = await buildProfileCard(uuid, view, profileId);
+    const message = await buildNetworthCard(uuid, profileId);
     await editReplyWithExpiry(interaction, message);
   } catch (err) {
-    logger.error({ err }, "Profile select menu failed");
+    logger.error({ err }, "Networth select menu failed");
     await interaction.editReply({ embeds: [buildErrorEmbed(toUserMessage(err))], components: [] });
   }
 }

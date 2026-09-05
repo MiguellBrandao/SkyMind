@@ -1,9 +1,8 @@
 import { SlashCommandBuilder, type ChatInputCommandInteraction } from "discord.js";
-import { profileService } from "../../skyblock/services/profileService";
+import { editReplyWithExpiry } from "../interactions/componentExpiry";
+import { buildProfileCard } from "../interactions/profileCard";
 import { toUserMessage } from "../../utils/errors";
 import { buildErrorEmbed } from "../embeds/errorEmbed";
-import { buildStatsEmbed } from "../embeds/statsEmbed";
-import { buildProfileActionRow } from "../interactions/components";
 import { resolveCommandTarget } from "./resolveCommandTarget";
 import type { SlashCommand } from "./types";
 
@@ -17,8 +16,8 @@ export const statsCommand: SlashCommand = {
     await interaction.deferReply();
     try {
       const target = await resolveCommandTarget(interaction);
-      const snapshot = await profileService.getSnapshot(target.uuid, target.profileId);
-      await interaction.editReply({ embeds: [buildStatsEmbed(target.username, snapshot, target.uuid)], components: [buildProfileActionRow(target.uuid)] });
+      const message = await buildProfileCard(target.uuid, "stats", target.profileId);
+      await editReplyWithExpiry(interaction, message);
     } catch (err) {
       await interaction.editReply({ embeds: [buildErrorEmbed(toUserMessage(err))] });
     }

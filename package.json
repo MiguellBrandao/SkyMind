@@ -22,7 +22,9 @@
     "deploy:commands": "tsx src/bot/deploy-commands.ts",
     "deploy:commands:prod": "node dist/src/bot/deploy-commands.js",
     "knowledge:sync": "tsx scripts/knowledge-sync.ts",
-    "knowledge:sync:prod": "node dist/scripts/knowledge-sync.js"
+    "knowledge:sync:prod": "node dist/scripts/knowledge-sync.js",
+    "emojis:upload": "tsx scripts/upload-emojis.ts",
+    "emojis:upload:prod": "node dist/scripts/upload-emojis.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

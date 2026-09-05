@@ -2,7 +2,7 @@ import { EmbedBuilder } from "discord.js";
 import type { ParsedSlayer } from "../../hypixel/parsers/slayersParser";
 import type { SkyblockProfileDetail } from "../../skyblock/services/profileService";
 import { COLORS } from "./colors";
-import { SLAYER_ICON, SLAYER_ORDER } from "./icons";
+import { SLAYER_ICON, SLAYER_ORDER, STAT_ICON } from "./icons";
 import { getProfileEmoji } from "./profileNameEmoji";
 import { getSkinAvatarUrl } from "./skinRender";
 
@@ -64,20 +64,20 @@ export function buildProfileEmbed(username: string, detail: SkyblockProfileDetai
     .setThumbnail(getSkinAvatarUrl(extras.uuid))
     .setTitle(detail.cuteName ? `${profileEmoji} ${detail.cuteName}${detail.gameMode && detail.gameMode !== "classic" ? ` (${detail.gameMode})` : ""}` : null)
     .addFields(
-      { name: "🌟 SkyBlock Level", value: `${detail.skyblockLevel}`, inline: true },
-      { name: "📈 Skill Average", value: `${detail.skills.skillAverage}`, inline: true },
-      { name: "🏰 Catacombs", value: `${detail.dungeons.catacombs.level}`, inline: true },
-      { name: "✨ Magical Power", value: `${detail.magicalPower}`, inline: true },
-      { name: "👛 Purse", value: `${formatCoins(detail.purseCoins)} coins`, inline: true },
-      { name: "🏦 Bank", value: `${formatCoins(detail.bankCoins)} coins`, inline: true },
-      { name: "💎 Net Worth", value: `${formatCoins(extras.estimatedNetWorth)} coins${netWorthNote}`, inline: true },
+      { name: `${STAT_ICON.skyblockLevel} SkyBlock Level`, value: `${detail.skyblockLevel}`, inline: true },
+      { name: `${STAT_ICON.skillAverage} Skill Average`, value: `${detail.skills.skillAverage}`, inline: true },
+      { name: `${STAT_ICON.catacombs} Catacombs`, value: `${detail.dungeons.catacombs.level}`, inline: true },
+      { name: `${STAT_ICON.magicalPower} Magical Power`, value: `${detail.magicalPower}`, inline: true },
+      { name: `${STAT_ICON.purse} Purse`, value: `${formatCoins(detail.purseCoins)} coins`, inline: true },
+      { name: `${STAT_ICON.bank} Bank`, value: `${formatCoins(detail.bankCoins)} coins`, inline: true },
+      { name: `${STAT_ICON.networth} Net Worth`, value: `${formatCoins(extras.estimatedNetWorth)} coins${netWorthNote}`, inline: true },
       { name: "🗡️ Slayers", value: detail.slayers.length > 0 ? formatSlayers(detail.slayers) : "No slayer progress yet", inline: true },
       ...(extras.collectionsSummary
-        ? [{ name: "📦 Collections Maxed", value: `${extras.collectionsSummary.maxed}/${extras.collectionsSummary.total}`, inline: true }]
+        ? [{ name: `${STAT_ICON.collections} Collections Maxed`, value: `${extras.collectionsSummary.maxed}/${extras.collectionsSummary.total}`, inline: true }]
         : []),
     )
     .addFields({
-      name: "⚔️ Equipment",
+      name: `${STAT_ICON.equipment} Equipment`,
       value: [`Armor: ${armorSet ?? "Not detected"}`, `Weapon: ${weapon ?? "Not detected"}`, `Pet: ${detail.activePet ? `${detail.activePet.type} (${detail.activePet.rarity})` : "None active"}`].join("\n"),
     });
 

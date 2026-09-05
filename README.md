@@ -217,8 +217,21 @@ up -d redis`. Cache TTLs are fully configurable via env vars (see `.env.example`
 
 ```bash
 npm run deploy:commands   # registers slash commands (guild-scoped if DISCORD_DEV_GUILD_ID is set)
+npm run emojis:upload     # optional: uploads real Minecraft item icons as custom emoji (see below)
 npm run dev                # starts the bot + API server with hot reload (tsx watch)
 ```
+
+### Real Minecraft icons (optional)
+
+By default, embeds use plain Unicode emoji for skills/stats/slayers. Running `npm run emojis:upload`
+(once, or again after any redeploy on an ephemeral filesystem) uploads a curated set of real
+Minecraft item textures - sourced from [PrismarineJS/minecraft-assets](https://github.com/PrismarineJS/minecraft-assets),
+the same extracted-game-texture basis every Minecraft wiki/tool relies on - as
+[Discord Application Emoji](https://docs.discord.com/developers/resources/emoji#create-application-emoji),
+using your existing `DISCORD_BOT_TOKEN`/`DISCORD_CLIENT_ID`. It's idempotent (safe to re-run; already-
+uploaded icons are reused, not re-uploaded) and writes `data/customEmojis.generated.json`, which the
+bot reads at startup. If that file doesn't exist, everything falls back to Unicode automatically -
+nothing breaks if you skip this step.
 
 For production:
 
@@ -241,13 +254,16 @@ protected `GET /admin/health` / `GET /admin/stats` (set `ADMIN_API_TOKEN` to ena
 | `/unlink` | Unlink your Minecraft account (with confirmation) |
 | `/profile [ign]` | SkyBlock profile overview embed (level, real net worth, slayers, collections, equipment) with Stats/Ask AI/Refresh buttons, plus a profile-switcher dropdown if the account has more than one SkyBlock profile |
 | `/stats [ign]` | Detailed skill/dungeon-class/slayer breakdown |
+| `/networth [ign]` | Detailed net worth breakdown by category (armor, inventory, accessories, pets, museum, ...), with the same profile-switcher dropdown |
 | `/ask <message>` | Ask SkyMind's AI agent anything about SkyBlock - including full progression analysis (the `analyze_profile` tool covers what a dedicated `/analyze` command used to) |
 | `/settings ai` | Choose your AI provider (Default/Gemini/OpenAI/Anthropic/Custom) via a select menu + modal |
 | `/settings default-profile profile:<name>` | Change which SkyBlock profile `/profile`, `/stats`, and `/ask` default to |
 | `/settings delete-data` | Permanently delete everything SkyMind stored about you |
 | `/admin cache\|knowledge\|stats\|ai\|maintenance` | Administrator tools (see below) |
 
-All account-linking and settings responses are ephemeral (only visible to the invoking user). When a linked account has multiple SkyBlock profiles, `/profile`, `/stats`, and `/ask` use (in order): an explicit profile named in the request, the account's saved default profile (`/link`'s `profile` option or `/settings default-profile`), then Hypixel's own in-game "selected" profile.
+All account-linking and settings responses are ephemeral (only visible to the invoking user). When a linked account has multiple SkyBlock profiles, `/profile`, `/stats`, `/networth`, and `/ask` use (in order): an explicit profile named in the request, the account's saved default profile (`/link`'s `profile` option or `/settings default-profile`), then Hypixel's own in-game "selected" profile. The `/profile`/`/stats` toggle button and profile dropdown always operate on whichever profile/view is currently on screen.
+
+Every card with buttons or a dropdown (profile/stats/net worth cards, the link confirmation button, the settings AI select menu) automatically removes its components after 2 minutes of inactivity, so the bot isn't left listening on stale interactive messages indefinitely.
 
 ---
 
@@ -399,8 +415,12 @@ no Dockerfile/Compose changes needed on your end.
    cd /app
    npm run db:migrate:prod
    npm run deploy:commands:prod
+   npm run emojis:upload:prod   # optional: real Minecraft icons instead of Unicode emoji
    ```
    You only need to do this once (and again after any future schema change, for `db:migrate:prod`).
+   `emojis:upload:prod`'s output is stored on the container's own filesystem, so on a platform that
+   recreates the container on every deploy (no volume mount), re-run it after each redeploy - it's
+   near-instant since it recognizes already-uploaded icons and skips them.
 8. (Optional) In **Domains**, attach a domain/subdomain to the `app` service's internal port `3000`
    if you want `GET /health` reachable from outside for uptime monitoring - the bot itself
    doesn't need a domain since Discord talks to it over an outbound WebSocket connection, not

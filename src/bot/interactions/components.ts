@@ -1,10 +1,22 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from "discord.js";
 
-export function buildProfileActionRow(uuid: string): ActionRowBuilder<ButtonBuilder> {
+export type ProfileCardView = "profile" | "stats";
+
+/**
+ * The middle button toggles between the overview card and the detailed stats card. `profileId`
+ * is threaded through every button's customId so toggle/refresh keep showing whichever SkyBlock
+ * profile is currently selected (via the dropdown) instead of resetting to the account's default.
+ */
+export function buildProfileActionRow(uuid: string, view: ProfileCardView, profileId: string): ActionRowBuilder<ButtonBuilder> {
+  const toggle =
+    view === "profile"
+      ? new ButtonBuilder().setCustomId(`profile:toggle:${uuid}:${view}:${profileId}`).setLabel("View Stats").setStyle(ButtonStyle.Secondary).setEmoji("📈")
+      : new ButtonBuilder().setCustomId(`profile:toggle:${uuid}:${view}:${profileId}`).setLabel("View Profile").setStyle(ButtonStyle.Secondary).setEmoji("📊");
+
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder().setCustomId(`profile:stats:${uuid}`).setLabel("View Stats").setStyle(ButtonStyle.Secondary).setEmoji("📈"),
-    new ButtonBuilder().setCustomId(`profile:ask:${uuid}`).setLabel("Ask AI").setStyle(ButtonStyle.Success).setEmoji("🤖"),
-    new ButtonBuilder().setCustomId(`profile:refresh:${uuid}`).setLabel("Refresh").setStyle(ButtonStyle.Secondary).setEmoji("🔄"),
+    toggle,
+    new ButtonBuilder().setCustomId(`profile:ask:${uuid}:${view}:${profileId}`).setLabel("Ask AI").setStyle(ButtonStyle.Success).setEmoji("🤖"),
+    new ButtonBuilder().setCustomId(`profile:refresh:${uuid}:${view}:${profileId}`).setLabel("Refresh").setStyle(ButtonStyle.Secondary).setEmoji("🔄"),
   );
 }
 
@@ -14,9 +26,10 @@ export interface ProfileSelectOption {
   selected: boolean;
 }
 
-export function buildProfileSelectRow(uuid: string, profiles: ProfileSelectOption[]): ActionRowBuilder<StringSelectMenuBuilder> {
+/** `namespace` lets /networth reuse this same dropdown independently of the profile/stats card. */
+export function buildProfileSelectRow(uuid: string, view: string, profiles: ProfileSelectOption[], namespace = "profile"): ActionRowBuilder<StringSelectMenuBuilder> {
   const select = new StringSelectMenuBuilder()
-    .setCustomId(`profile:select-profile:${uuid}`)
+    .setCustomId(`${namespace}:select-profile:${uuid}:${view}`)
     .setPlaceholder("Switch SkyBlock profile")
     .addOptions(profiles.slice(0, 25).map((p) => ({ label: p.label, value: p.profileId, default: p.selected })));
   return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);

@@ -2,7 +2,7 @@ import { EmbedBuilder } from "discord.js";
 import type { SkyblockProfileSnapshot } from "../../skyblock/services/profileService";
 import { COLORS } from "./colors";
 import { CREDIT_LINE } from "./profileEmbed";
-import { DUNGEON_CLASS_ICON, SKILL_ICON, SLAYER_ICON, SLAYER_ORDER } from "./icons";
+import { DUNGEON_CLASS_ICON, SKILL_ICON, SLAYER_ICON, SLAYER_ORDER, STAT_ICON } from "./icons";
 import { getSkinAvatarUrl } from "./skinRender";
 
 function formatSkillLine(key: string, label: string, level: number | undefined, progress: number | undefined): string {
@@ -37,9 +37,9 @@ export function buildStatsEmbed(username: string, snapshot: SkyblockProfileSnaps
     .setThumbnail(getSkinAvatarUrl(uuid))
     .addFields(
       { name: "📚 Skills", value: skillLines },
-      { name: `📈 Skill Average: ${snapshot.skills.skillAverage}`, value: "​" },
+      { name: `${STAT_ICON.skillAverage} Skill Average: ${snapshot.skills.skillAverage}`, value: "​" },
       {
-        name: `🏰 Catacombs: ${snapshot.dungeons.catacombs.level}${snapshot.dungeons.masterCatacombs ? ` (Master ${snapshot.dungeons.masterCatacombs.level})` : ""}`,
+        name: `${STAT_ICON.catacombs} Catacombs: ${snapshot.dungeons.catacombs.level}${snapshot.dungeons.masterCatacombs ? ` (Master ${snapshot.dungeons.masterCatacombs.level})` : ""}`,
         value: classLines || "No class data",
       },
       { name: "🗡️ Slayers", value: slayerLines },

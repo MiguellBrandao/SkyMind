@@ -3,6 +3,7 @@ import { linkService } from "../../verification/linkService";
 import { toUserMessage } from "../../utils/errors";
 import { buildErrorEmbed, buildInfoEmbed } from "../embeds/errorEmbed";
 import { buildLinkConfirmRow } from "../interactions/components";
+import { editReplyWithExpiry } from "../interactions/componentExpiry";
 import type { SlashCommand } from "./types";
 
 function profileNotFoundNote(profileName: string | undefined): string {
@@ -41,7 +42,7 @@ export const linkCommand: SlashCommand = {
         return;
       }
 
-      await interaction.editReply({
+      await editReplyWithExpiry(interaction, {
         embeds: [
           buildInfoEmbed(
             "🔐 One More Step",

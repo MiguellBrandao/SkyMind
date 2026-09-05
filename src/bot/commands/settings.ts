@@ -6,6 +6,7 @@ import { toUserMessage } from "../../utils/errors";
 import { linkService } from "../../verification/linkService";
 import { buildErrorEmbed, buildInfoEmbed } from "../embeds/errorEmbed";
 import { buildAiProviderSelectRow } from "../interactions/components";
+import { replyWithExpiry } from "../interactions/componentExpiry";
 import type { SlashCommand } from "./types";
 
 export const settingsCommand: SlashCommand = {
@@ -25,7 +26,7 @@ export const settingsCommand: SlashCommand = {
     const sub = interaction.options.getSubcommand();
 
     if (sub === "ai") {
-      await interaction.reply({
+      await replyWithExpiry(interaction, {
         embeds: [buildInfoEmbed("🤖 AI Provider", "Choose which AI provider SkyMind should use for `/ask` and AI-powered buttons. Your key is encrypted at rest and never logged.")],
         components: [buildAiProviderSelectRow()],
         ephemeral: true,
