@@ -1,10 +1,24 @@
 import { startApiServer } from "./api/server";
 import { createDiscordClient } from "./bot/client";
+import { setCustomEmojiIds } from "./bot/embeds/customEmojis";
+import { syncCustomEmojis } from "./bot/embeds/emojiSync";
 import { registerEvents } from "./bot/events";
 import { env } from "./config/env";
 import { checkDatabaseHealth, closeDatabase } from "./database/client";
 import { checkRedisHealth, closeRedis } from "./services/redisClient";
 import { logger } from "./utils/logger";
+
+async function syncEmojisInBackground(): Promise<void> {
+  try {
+    const result = await syncCustomEmojis();
+    setCustomEmojiIds(result.mapping);
+    if (result.uploaded > 0 || result.failed > 0) {
+      logger.info(result, "Minecraft icon emoji sync finished");
+    }
+  } catch (err) {
+    logger.warn({ err }, "Minecraft icon emoji sync failed - embeds will use Unicode fallback icons");
+  }
+}
 
 async function main(): Promise<void> {
   const [dbOk, redisOk] = await Promise.all([checkDatabaseHealth(), checkRedisHealth()]);
@@ -13,7 +27,7 @@ async function main(): Promise<void> {
 
   const client = createDiscordClient();
   registerEvents(client);
-  await client.login(env.DISCORD_BOT_TOKEN);
+  await Promise.all([client.login(env.DISCORD_BOT_TOKEN), syncEmojisInBackground()]);
 
   const apiServer = await startApiServer();
 

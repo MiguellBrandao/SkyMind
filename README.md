@@ -217,21 +217,23 @@ up -d redis`. Cache TTLs are fully configurable via env vars (see `.env.example`
 
 ```bash
 npm run deploy:commands   # registers slash commands (guild-scoped if DISCORD_DEV_GUILD_ID is set)
-npm run emojis:upload     # optional: uploads real Minecraft item icons as custom emoji (see below)
 npm run dev                # starts the bot + API server with hot reload (tsx watch)
 ```
 
-### Real Minecraft icons (optional)
+### Real Minecraft icons
 
-By default, embeds use plain Unicode emoji for skills/stats/slayers. Running `npm run emojis:upload`
-(once, or again after any redeploy on an ephemeral filesystem) uploads a curated set of real
-Minecraft item textures - sourced from [PrismarineJS/minecraft-assets](https://github.com/PrismarineJS/minecraft-assets),
-the same extracted-game-texture basis every Minecraft wiki/tool relies on - as
-[Discord Application Emoji](https://docs.discord.com/developers/resources/emoji#create-application-emoji),
-using your existing `DISCORD_BOT_TOKEN`/`DISCORD_CLIENT_ID`. It's idempotent (safe to re-run; already-
-uploaded icons are reused, not re-uploaded) and writes `data/customEmojis.generated.json`, which the
-bot reads at startup. If that file doesn't exist, everything falls back to Unicode automatically -
-nothing breaks if you skip this step.
+Embeds use real Minecraft item textures (not Unicode emoji) for skills/stats/slayers, sourced from
+[PrismarineJS/minecraft-assets](https://github.com/PrismarineJS/minecraft-assets) - the same
+extracted-game-texture basis every Minecraft wiki/tool relies on - uploaded as
+[Discord Application Emoji](https://docs.discord.com/developers/resources/emoji#create-application-emoji).
+**This happens automatically, in the background, every time the bot starts** (see
+`syncCustomEmojis()` in `src/bot/embeds/emojiSync.ts`, called from `src/index.ts`): it checks which
+icons already exist on your application and uploads only the missing ones, so after the first
+successful boot it's just one quick API call on every subsequent start - no manual step, and nothing
+that needs to survive a container restart or redeploy. If the sync fails for any reason (rate limit,
+missing permissions, network issue), it logs a warning and every embed falls back to Unicode emoji
+automatically - nothing else breaks. `npm run emojis:upload` runs the same sync standalone if you
+want to trigger/inspect it without starting the whole bot.
 
 For production:
 
@@ -415,12 +417,10 @@ no Dockerfile/Compose changes needed on your end.
    cd /app
    npm run db:migrate:prod
    npm run deploy:commands:prod
-   npm run emojis:upload:prod   # optional: real Minecraft icons instead of Unicode emoji
    ```
    You only need to do this once (and again after any future schema change, for `db:migrate:prod`).
-   `emojis:upload:prod`'s output is stored on the container's own filesystem, so on a platform that
-   recreates the container on every deploy (no volume mount), re-run it after each redeploy - it's
-   near-instant since it recognizes already-uploaded icons and skips them.
+   The Minecraft-icon emoji sync needs no manual step here at all - it runs automatically every time
+   the `app` container starts.
 8. (Optional) In **Domains**, attach a domain/subdomain to the `app` service's internal port `3000`
    if you want `GET /health` reachable from outside for uptime monitoring - the bot itself
    doesn't need a domain since Discord talks to it over an outbound WebSocket connection, not

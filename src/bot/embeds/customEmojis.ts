@@ -1,19 +1,19 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { logger } from "../../utils/logger";
-
-const EMOJI_MAP_PATH = path.join(process.cwd(), "data", "customEmojis.generated.json");
 
 let emojiIds: Record<string, string> = {};
 
-try {
-  emojiIds = JSON.parse(readFileSync(EMOJI_MAP_PATH, "utf8")) as Record<string, string>;
-} catch {
-  logger.info("No custom Minecraft-icon emoji mapping found - falling back to Unicode emoji. Run `npm run emojis:upload` to enable real icons.");
-}
-
-/** Returns a custom Discord emoji tag (real Minecraft icon) if `npm run emojis:upload` has been run, otherwise a Unicode fallback. */
+/**
+ * Returns a custom Discord emoji tag (real Minecraft icon) if the startup sync (see emojiSync.ts,
+ * run automatically every time the bot boots) resolved one, otherwise a Unicode fallback. Reads
+ * `emojiIds` fresh on every call (not cached at import time), so it starts returning real icons
+ * the moment the sync finishes without needing a restart.
+ */
 export function icon(key: string, fallback: string): string {
   const id = emojiIds[key];
   return id ? `<:sm_${key}:${id}>` : fallback;
+}
+
+export function setCustomEmojiIds(ids: Record<string, string>): void {
+  emojiIds = ids;
+  logger.info({ count: Object.keys(ids).length }, "Custom Minecraft-icon emoji mapping is live");
 }

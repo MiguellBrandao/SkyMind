@@ -1,46 +1,65 @@
 import { icon } from "./customEmojis";
 
-export const SKILL_ICON: Record<string, string> = {
-  farming: icon("farming", "🌾"),
-  mining: icon("mining", "⛏️"),
-  combat: icon("combat", "⚔️"),
-  foraging: icon("foraging", "🌳"),
-  fishing: icon("fishing", "🎣"),
-  enchanting: icon("enchanting", "📜"),
-  alchemy: icon("alchemy", "🧪"),
-  taming: icon("taming", "🐾"),
-  carpentry: icon("carpentry", "🔨"),
-  runecrafting: icon("runecrafting", "🔯"),
-  social: icon("social", "🗨️"),
-};
+/**
+ * Wraps a {displayKey: [manifestKey, unicodeFallback]} map in a Proxy so property/index access
+ * (e.g. `SKILL_ICON.farming` or `SKILL_ICON[key]`) re-resolves `icon()` on every read instead of
+ * baking in whatever it returned at module-import time. This matters because the real Minecraft
+ * icon mapping is only known after the async startup emoji sync finishes (see emojiSync.ts) -
+ * with a plain object these would be frozen as Unicode fallbacks forever.
+ */
+function lazyIconMap(entries: Record<string, readonly [manifestKey: string, fallback: string]>): Record<string, string> {
+  return new Proxy(
+    {},
+    {
+      get(_target, prop: string) {
+        const entry = entries[prop];
+        return entry ? icon(entry[0], entry[1]) : undefined;
+      },
+    },
+  );
+}
 
-export const DUNGEON_CLASS_ICON: Record<string, string> = {
-  healer: icon("healer", "❤️‍🩹"),
-  mage: icon("mage", "🔮"),
-  berserk: icon("berserk", "💢"),
-  archer: icon("archer", "🏹"),
-  tank: icon("tank", "🛡️"),
-};
+export const SKILL_ICON = lazyIconMap({
+  farming: ["farming", "🌾"],
+  mining: ["mining", "⛏️"],
+  combat: ["combat", "⚔️"],
+  foraging: ["foraging", "🌳"],
+  fishing: ["fishing", "🎣"],
+  enchanting: ["enchanting", "📜"],
+  alchemy: ["alchemy", "🧪"],
+  taming: ["taming", "🐾"],
+  carpentry: ["carpentry", "🔨"],
+  runecrafting: ["runecrafting", "🔯"],
+  social: ["social", "🗨️"],
+});
 
-export const SLAYER_ICON: Record<string, string> = {
-  zombie: icon("slayer_zombie", "🧟"),
-  spider: icon("slayer_spider", "🕷️"),
-  wolf: icon("slayer_wolf", "🐺"),
-  enderman: icon("slayer_enderman", "🎯"),
-  blaze: icon("slayer_blaze", "🔥"),
-  vampire: icon("slayer_vampire", "🧛"),
-};
+export const DUNGEON_CLASS_ICON = lazyIconMap({
+  healer: ["healer", "❤️‍🩹"],
+  mage: ["mage", "🔮"],
+  berserk: ["berserk", "💢"],
+  archer: ["archer", "🏹"],
+  tank: ["tank", "🛡️"],
+});
+
+export const SLAYER_ICON = lazyIconMap({
+  zombie: ["slayer_zombie", "🧟"],
+  spider: ["slayer_spider", "🕷️"],
+  wolf: ["slayer_wolf", "🐺"],
+  enderman: ["slayer_enderman", "🎯"],
+  blaze: ["slayer_blaze", "🔥"],
+  vampire: ["slayer_vampire", "🧛"],
+});
 
 export const SLAYER_ORDER = ["zombie", "spider", "wolf", "enderman", "blaze", "vampire"] as const;
 
-export const STAT_ICON = {
-  skyblockLevel: icon("skyblock_level", "🌟"),
-  skillAverage: icon("skill_average", "📈"),
-  catacombs: icon("catacombs", "🏰"),
-  magicalPower: icon("magical_power", "✨"),
-  purse: icon("purse", "👛"),
-  bank: icon("bank", "🏦"),
-  networth: icon("networth", "💎"),
-  collections: icon("collections", "📦"),
-  equipment: icon("equipment", "⚔️"),
-} as const;
+export const STAT_ICON = lazyIconMap({
+  skyblockLevel: ["skyblock_level", "🌟"],
+  skillAverage: ["skill_average", "📈"],
+  catacombs: ["catacombs", "🏰"],
+  magicalPower: ["magical_power", "✨"],
+  purse: ["purse", "👛"],
+  bank: ["bank", "🏦"],
+  networth: ["networth", "💎"],
+  collections: ["collections", "📦"],
+  equipment: ["equipment", "⚔️"],
+});
