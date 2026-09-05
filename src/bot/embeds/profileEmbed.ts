@@ -1,6 +1,10 @@
 import { EmbedBuilder } from "discord.js";
+import type { ParsedSlayer } from "../../hypixel/parsers/slayersParser";
 import type { SkyblockProfileDetail } from "../../skyblock/services/profileService";
 import { COLORS } from "./colors";
+import { SLAYER_ICON, SLAYER_ORDER } from "./icons";
+import { getProfileEmoji } from "./profileNameEmoji";
+import { getSkinAvatarUrl } from "./skinRender";
 
 const ARMOR_PIECE_SUFFIXES = [" Helmet", " Chestplate", " Leggings", " Boots", " Hat", " Cap", " Mask"];
 
@@ -28,22 +32,47 @@ function findWeaponName(items: { minecraftId: number | null; lore: string[]; dis
   return candidate?.displayName ?? null;
 }
 
-export function buildProfileEmbed(username: string, detail: SkyblockProfileDetail): EmbedBuilder {
+function formatCoins(amount: number): string {
+  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(2)}M`;
+  if (amount >= 1_000) return `${(amount / 1_000).toFixed(1)}K`;
+  return Math.round(amount).toLocaleString("en-US");
+}
+
+function formatSlayers(slayers: ParsedSlayer[]): string {
+  const byBoss = new Map(slayers.map((s) => [s.boss, s.level]));
+  return SLAYER_ORDER.map((boss) => `${SLAYER_ICON[boss]}${byBoss.get(boss) ?? 0}`).join("  ");
+}
+
+export interface ProfileEmbedExtras {
+  uuid: string;
+  estimatedNetWorth: number;
+  netWorthConfidence: "high" | "medium" | "low";
+  collectionsSummary: { maxed: number; total: number } | null;
+}
+
+export function buildProfileEmbed(username: string, detail: SkyblockProfileDetail, extras: ProfileEmbedExtras): EmbedBuilder {
   const armorSet = guessArmorSetName(detail.armor.map((a) => a.displayName));
   const weapon = findWeaponName(detail.inventory);
   const combatLevel = detail.skills.skills.combat?.level ?? 0;
+  const profileEmoji = getProfileEmoji(detail.cuteName);
 
   const embed = new EmbedBuilder()
     .setColor(COLORS.primary)
-    .setTitle(`📊 ${username}'s SkyBlock Profile`)
-    .setDescription(detail.cuteName ? `Profile: **${detail.cuteName}**${detail.gameMode && detail.gameMode !== "classic" ? ` (${detail.gameMode})` : ""}` : null)
+    .setAuthor({ name: `${username}'s SkyBlock Profile`, iconURL: getSkinAvatarUrl(extras.uuid) })
+    .setThumbnail(getSkinAvatarUrl(extras.uuid))
+    .setTitle(detail.cuteName ? `${profileEmoji} ${detail.cuteName}${detail.gameMode && detail.gameMode !== "classic" ? ` (${detail.gameMode})` : ""}` : null)
     .addFields(
-      { name: "Level", value: `${detail.skyblockLevel}`, inline: true },
-      { name: "Combat", value: `${combatLevel}`, inline: true },
-      { name: "Catacombs", value: `${detail.dungeons.catacombs.level}`, inline: true },
-      { name: "Magical Power", value: `${detail.magicalPower}`, inline: true },
-      { name: "Purse", value: `${Math.round(detail.purseCoins).toLocaleString("en-US")} coins`, inline: true },
-      { name: "Bank", value: `${Math.round(detail.bankCoins).toLocaleString("en-US")} coins`, inline: true },
+      { name: "🌟 SkyBlock Level", value: `${detail.skyblockLevel}`, inline: true },
+      { name: "📈 Skill Average", value: `${detail.skills.skillAverage}`, inline: true },
+      { name: "🏰 Catacombs", value: `${detail.dungeons.catacombs.level}`, inline: true },
+      { name: "✨ Magical Power", value: `${detail.magicalPower}`, inline: true },
+      { name: "👛 Purse", value: `${formatCoins(detail.purseCoins)} coins`, inline: true },
+      { name: "🏦 Bank", value: `${formatCoins(detail.bankCoins)} coins`, inline: true },
+      { name: "💎 Est. Net Worth", value: `${formatCoins(extras.estimatedNetWorth)} coins (${extras.netWorthConfidence} confidence)`, inline: true },
+      { name: "🗡️ Slayers", value: detail.slayers.length > 0 ? formatSlayers(detail.slayers) : "No slayer progress yet", inline: true },
+      ...(extras.collectionsSummary
+        ? [{ name: "📦 Collections Maxed", value: `${extras.collectionsSummary.maxed}/${extras.collectionsSummary.total}`, inline: true }]
+        : []),
     )
     .addFields({
       name: "⚔️ Equipment",

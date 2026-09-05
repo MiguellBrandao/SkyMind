@@ -2,7 +2,6 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder }
 
 export function buildProfileActionRow(uuid: string): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder().setCustomId(`profile:analyze:${uuid}`).setLabel("Analyze").setStyle(ButtonStyle.Primary).setEmoji("🔎"),
     new ButtonBuilder().setCustomId(`profile:stats:${uuid}`).setLabel("View Stats").setStyle(ButtonStyle.Secondary).setEmoji("📈"),
     new ButtonBuilder().setCustomId(`profile:ask:${uuid}`).setLabel("Ask AI").setStyle(ButtonStyle.Success).setEmoji("🤖"),
     new ButtonBuilder().setCustomId(`profile:refresh:${uuid}`).setLabel("Refresh").setStyle(ButtonStyle.Secondary).setEmoji("🔄"),

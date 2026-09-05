@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, type ChatInputCommandInteraction } from "discord.js";
 import { profileService } from "../../skyblock/services/profileService";
+import { getProfileOverviewExtras } from "../../skyblock/services/profileOverviewService";
 import { toUserMessage } from "../../utils/errors";
 import { buildErrorEmbed } from "../embeds/errorEmbed";
 import { buildProfileEmbed } from "../embeds/profileEmbed";
@@ -18,7 +19,11 @@ export const profileCommand: SlashCommand = {
     try {
       const target = await resolveCommandTarget(interaction);
       const detail = await profileService.getDetail(target.uuid);
-      await interaction.editReply({ embeds: [buildProfileEmbed(target.username, detail)], components: [buildProfileActionRow(target.uuid)] });
+      const extras = await getProfileOverviewExtras(detail);
+      await interaction.editReply({
+        embeds: [buildProfileEmbed(target.username, detail, { uuid: target.uuid, ...extras })],
+        components: [buildProfileActionRow(target.uuid)],
+      });
     } catch (err) {
       await interaction.editReply({ embeds: [buildErrorEmbed(toUserMessage(err))] });
     }

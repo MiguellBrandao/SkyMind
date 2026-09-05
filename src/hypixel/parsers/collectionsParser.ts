@@ -67,3 +67,19 @@ export function computeCollectionTiers(rawCollections: Record<string, number>, r
 
   return result;
 }
+
+/** Total number of collections that exist in the game (across all categories), per Hypixel's resource data. */
+export function countTotalCollections(resource: CollectionResourceShape): number {
+  const categories = resource.collections ?? {};
+  let total = 0;
+  for (const rawCategory of Object.values(categories)) {
+    const category = rawCategory as CollectionCategoryShape;
+    total += Object.keys(category.items ?? {}).length;
+  }
+  return total;
+}
+
+/** How many of the player's collections are at their maximum tier. */
+export function countMaxedCollections(tiers: Record<string, CollectionProgress>): number {
+  return Object.values(tiers).filter((progress) => progress.maxTier > 0 && progress.tier >= progress.maxTier).length;
+}
