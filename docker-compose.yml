@@ -6,11 +6,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-skymind}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-skymind}
       POSTGRES_DB: ${POSTGRES_DB:-skymind}
-    # Bound to localhost only - reachable from the host machine (e.g. a DB GUI client during
-    # local dev) but never exposed to the public internet on a VPS. The `app` service always
-    # reaches this over the internal Docker network regardless of this mapping.
-    ports:
-      - "127.0.0.1:5432:5432"
+    # Not published to the host by default - the `app` service reaches it over the internal
+    # Docker network regardless (service name `postgres`). This avoids clashing with anything
+    # else already using 5432 on a shared VPS. Uncomment to reach it from the host (e.g. a local
+    # DB GUI client) - keep it bound to 127.0.0.1 if you do, never publish it on all interfaces.
+    # ports:
+    #   - "127.0.0.1:5432:5432"
     volumes:
       - skymind_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,8 +23,9 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:6379:6379"
+    # Not published to the host by default - see the note on postgres above.
+    # ports:
+    #   - "127.0.0.1:6379:6379"
     volumes:
       - skymind_redis_data:/data
     healthcheck:
@@ -47,8 +49,14 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-skymind}:${POSTGRES_PASSWORD:-skymind}@postgres:5432/${POSTGRES_DB:-skymind}
       REDIS_URL: redis://redis:6379
-    ports:
-      - "3000:3000"
+    # Not published to the host: the bot itself only makes outbound connections (Discord
+    # gateway, Hypixel API), so it needs no inbound port. The Fastify health/admin API still
+    # runs on API_PORT inside the container - if you want it reachable from outside, attach a
+    # domain to this service in your hosting platform (e.g. Dokploy's Domains tab) pointing at
+    # container port 3000, rather than publishing a host port here (which risks clashing with
+    # other services on a shared VPS - this is exactly what broke the first deploy attempt).
+    expose:
+      - "3000"
 
 volumes:
   skymind_postgres_data:
