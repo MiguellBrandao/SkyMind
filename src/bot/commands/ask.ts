@@ -4,10 +4,9 @@ import { loadConversationContext, recordTurn } from "../../ai/agent/conversation
 import { runAgent } from "../../ai/agent/SkyMindAgent";
 import { SYSTEM_SETTING_KEYS, systemSettingsRepository } from "../../database/repositories/systemSettingsRepository";
 import { toUserMessage } from "../../utils/errors";
+import { chunkMessageText } from "../../utils/textChunking";
 import { buildErrorEmbed } from "../embeds/errorEmbed";
 import type { SlashCommand } from "./types";
-
-const DISCORD_MESSAGE_LIMIT = 1900;
 
 export const askCommand: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -31,8 +30,11 @@ export const askCommand: SlashCommand = {
       const result = await runAgent({ discordUserId: interaction.user.id, userMessage: message, history, toolContext });
       await recordTurn(interaction.user.id, message, result.reply);
 
-      const reply = result.reply.length > DISCORD_MESSAGE_LIMIT ? `${result.reply.slice(0, DISCORD_MESSAGE_LIMIT)}...` : result.reply;
-      await interaction.editReply({ content: reply });
+      const [first, ...rest] = chunkMessageText(result.reply);
+      await interaction.editReply({ content: first });
+      for (const chunk of rest) {
+        await interaction.followUp({ content: chunk });
+      }
     } catch (err) {
       await interaction.editReply({ embeds: [buildErrorEmbed(toUserMessage(err))] });
     }

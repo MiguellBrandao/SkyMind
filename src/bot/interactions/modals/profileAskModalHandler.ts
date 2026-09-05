@@ -5,8 +5,7 @@ import { runAgent } from "../../../ai/agent/SkyMindAgent";
 import { hypixelClient } from "../../../hypixel/client/HypixelClient";
 import { toUserMessage } from "../../../utils/errors";
 import { logger } from "../../../utils/logger";
-
-const DISCORD_MESSAGE_LIMIT = 1900;
+import { chunkMessageText } from "../../../utils/textChunking";
 
 export async function handleProfileAskModal(interaction: ModalSubmitInteraction): Promise<void> {
   const uuid = interaction.customId.split(":")[2];
@@ -30,8 +29,11 @@ export async function handleProfileAskModal(interaction: ModalSubmitInteraction)
     const result = await runAgent({ discordUserId: interaction.user.id, userMessage: contextualMessage, history, toolContext });
     await recordTurn(interaction.user.id, contextualMessage, result.reply);
 
-    const reply = result.reply.length > DISCORD_MESSAGE_LIMIT ? `${result.reply.slice(0, DISCORD_MESSAGE_LIMIT)}...` : result.reply;
-    await interaction.editReply({ content: reply });
+    const [first, ...rest] = chunkMessageText(result.reply);
+    await interaction.editReply({ content: first });
+    for (const chunk of rest) {
+      await interaction.followUp({ content: chunk, ephemeral: true });
+    }
   } catch (err) {
     logger.error({ err }, "Profile ask modal failed");
     await interaction.editReply({ content: `❌ ${toUserMessage(err)}` });
