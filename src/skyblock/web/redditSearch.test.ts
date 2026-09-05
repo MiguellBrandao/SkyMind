@@ -68,6 +68,9 @@ describe("searchReddit", () => {
       { title: "Best reforge for Hyperion?", url: "https://www.reddit.com/r/HypixelSkyblock/comments/abc", selftext: "Discuss", score: 42 },
     ]);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    const searchCallUrl = new URL((fetchMock.mock.calls[1] as [URL])[0]);
+    expect(searchCallUrl.searchParams.get("t")).toBe("year");
   });
 
   it("returns an empty array when the search request fails", async () => {

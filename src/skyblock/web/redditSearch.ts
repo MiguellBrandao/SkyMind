@@ -68,6 +68,9 @@ export async function searchReddit(query: string, limit = 3): Promise<RedditSear
     url.searchParams.set("q", query);
     url.searchParams.set("restrict_sr", "1");
     url.searchParams.set("sort", "relevance");
+    // SkyBlock's meta shifts with game updates - without this, "relevance" happily surfaces a
+    // years-old top post describing a since-changed meta ahead of a smaller recent one.
+    url.searchParams.set("t", "year");
     url.searchParams.set("limit", String(limit));
 
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, "User-Agent": USER_AGENT } });

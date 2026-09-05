@@ -9,6 +9,17 @@ import { logger } from "../../utils/logger";
 
 const MAX_TOOL_ITERATIONS = 5;
 
+/**
+ * Matches recommendation/meta-style questions ("best setup for X", "bis gear", "meta build",
+ * "best money making method", ...). Game meta shifts with updates and reforges/items the model's
+ * training data won't reflect, and left to its own judgment the model sometimes skips
+ * search_skyblock_knowledge entirely and answers from (possibly stale/wrong) memory instead -
+ * confidently, with no indication it might be outdated. Forcing the search tool on the first turn
+ * for these guarantees real, current source material is in context before the model answers.
+ */
+const RECOMMENDATION_PATTERN =
+  /\b(best|bis|b\.i\.s\.?|meta|optimal|op)\b[^.!?\n]{0,60}\b(setup|build|loadout|gear|weapon|armou?r|class|pet|method|farm|route|strategy|reforge|enchant)\b|\b(setup|build|loadout)\b[^.!?\n]{0,30}\bfor\b|\bmoney[ -]?making\b/i;
+
 export interface AgentRunOptions {
   discordUserId: string;
   userMessage: string;
@@ -60,8 +71,11 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   const messages: ChatMessage[] = [...options.history, { role: "user", content: options.userMessage }];
   const toolsUsed: string[] = [];
 
+  const shouldForceKnowledgeSearch = RECOMMENDATION_PATTERN.test(options.userMessage) && relevantTools.some((tool) => tool.name === "search_skyblock_knowledge");
+
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-    const result = await provider.generate({ model, systemPrompt, messages, tools: toolDefinitions });
+    const forceToolName = iteration === 0 && shouldForceKnowledgeSearch ? "search_skyblock_knowledge" : undefined;
+    const result = await provider.generate({ model, systemPrompt, messages, tools: toolDefinitions, forceToolName });
 
     if (result.finishReason !== "tool_calls" || result.toolCalls.length === 0) {
       return {
