@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#241148"/>
+      <stop offset="100%" stop-color="#0A0518"/>
+    </linearGradient>
+
+    <linearGradient id="gem" x1="0.15" y1="0.1" x2="0.85" y2="0.95">
+      <stop offset="0%" stop-color="#C9C2E8"/>
+      <stop offset="45%" stop-color="#8E82C4"/>
+      <stop offset="100%" stop-color="#4C3D82"/>
+    </linearGradient>
+
+    <radialGradient id="socket" cx="45%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#0E3A30"/>
+      <stop offset="100%" stop-color="#051A16"/>
+    </radialGradient>
+
+    <linearGradient id="swirl" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D9FFA8"/>
+      <stop offset="55%" stop-color="#4FD98A"/>
+      <stop offset="100%" stop-color="#12A6A0"/>
+    </linearGradient>
+
+    <filter id="tightGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+
+  <!-- background -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- gem-shaped shell (lozenge / vertical eye gem, like an Eye of Ender) -->
+  <path d="M 256 122
+           C 304 146, 350 194, 350 256
+           C 350 318, 304 366, 256 390
+           C 208 366, 162 318, 162 256
+           C 162 194, 208 146, 256 122 Z"
+        fill="url(#gem)" stroke="#1B1038" stroke-width="6"/>
+
+  <!-- faceted highlight slivers on the shell -->
+  <path d="M 224 148 C 200 168, 182 196, 174 226 L 186 230 C 195 200, 211 174, 234 156 Z" fill="#EDE9FA" opacity="0.35"/>
+  <path d="M 246 130 C 236 134, 227 139, 219 145 L 226 154 C 234 148, 242 143, 251 139 Z" fill="#FFFFFF" opacity="0.5"/>
+
+  <!-- dark socket holding the eye -->
+  <circle cx="256" cy="256" r="94" fill="url(#socket)"/>
+  <circle cx="256" cy="256" r="94" fill="none" stroke="#1B1038" stroke-width="4" opacity="0.6"/>
+
+  <!-- swirling ender-eye iris -->
+  <g fill="none" stroke="url(#swirl)" stroke-width="12" stroke-linecap="round">
+    <path d="M 260.00 256.00 L 261.18 256.74 L 262.21 257.80 L 263.02 259.17 L 263.54 260.79 L 263.73 262.60 L 263.54 264.55 L 262.94 266.56 L 261.90 268.55 L 260.44 270.43 L 258.56 272.13 L 256.28 273.56 L 253.64 274.65 L 250.71 275.32 L 247.55 275.52 L 244.24 275.18 L 240.87 274.29 L 237.53 272.80 L 234.33 270.73 L 231.36 268.07 L 228.74 264.86 L 226.55 261.14 L 224.88 256.98 L 223.83 252.45 L 223.46 247.64 L 223.82 242.67 L 224.96 237.64 L 226.89 232.68 L 229.62 227.91 L 233.13 223.46 L 237.39 219.47 L 242.32 216.04 L 247.86 213.30 L 253.89 211.35 L 260.32 210.27 L 267.01 210.14 L 273.82 211.00 L 280.59 212.89 L 287.18 215.81 L 293.41 219.74 L 299.15 224.65 L 304.22 230.47 L 308.50 237.10 L 311.85 244.43 L 314.15 252.34 L 315.32 260.67 L 315.27 269.25 L 313.97 277.90 L 311.38 286.45 L 307.53 294.69 L 302.43 302.43 L 296.17 309.50 L 288.82 315.71 L 280.52 320.89"/>
+    <path d="M 252.00 256.00 L 250.82 255.26 L 249.79 254.20 L 248.98 252.83 L 248.46 251.21 L 248.27 249.40 L 248.46 247.45 L 249.06 245.44 L 250.10 243.45 L 251.56 241.57 L 253.44 239.87 L 255.72 238.44 L 258.36 237.35 L 261.29 236.68 L 264.45 236.48 L 267.76 236.82 L 271.13 237.71 L 274.47 239.20 L 277.67 241.27 L 280.64 243.93 L 283.26 247.14 L 285.45 250.86 L 287.12 255.02 L 288.17 259.55 L 288.54 264.36 L 288.18 269.33 L 287.04 274.36 L 285.11 279.32 L 282.38 284.09 L 278.87 288.54 L 274.61 292.53 L 269.68 295.96 L 264.14 298.70 L 258.11 300.65 L 251.68 301.73 L 244.99 301.86 L 238.18 301.00 L 231.41 299.11 L 224.82 296.19 L 218.59 292.26"/>
+  </g>
+
+  <!-- small tendrils poking out from the socket edge -->
+  <g fill="none" stroke="#4FD98A" stroke-width="7" stroke-linecap="round" opacity="0.85">
+    <path d="M 189 197 C 178 186, 170 178, 160 172"/>
+    <path d="M 325 196 C 336 185, 344 177, 354 171"/>
+    <path d="M 256 350 C 256 364, 256 374, 256 386"/>
+  </g>
+
+  <!-- pupil core -->
+  <circle cx="256" cy="256" r="15" fill="#04120D"/>
+  <circle cx="251" cy="251" r="4.5" fill="#EFFFF6" opacity="0.9"/>
+
+  <!-- crisp rim light on the gem (not a diffuse glow) -->
+  <path d="M 224 148 C 200 168, 182 196, 174 226" fill="none" stroke="#EDE9FA" stroke-width="3" opacity="0.6" filter="url(#tightGlow)"/>
+
+  <!-- scanner corner brackets (AI motif) -->
+  <g stroke="#8FF3FF" stroke-width="6" stroke-linecap="round" fill="none">
+    <path d="M 146 186 L 146 166 L 166 166"/>
+    <path d="M 366 186 L 366 166 L 346 166"/>
+    <path d="M 146 326 L 146 346 L 166 346"/>
+    <path d="M 366 326 L 366 346 L 346 346"/>
+  </g>
+</svg>
