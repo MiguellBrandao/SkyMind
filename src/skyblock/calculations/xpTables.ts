@@ -76,9 +76,14 @@ function levelFromTable(xp: number, table: number[], maxLevel: number): LevelRes
   return { level, maxLevel, currentXp: xp, xpIntoLevel: xp - cumulative, xpForNextLevel: null, progressToNext: 1 };
 }
 
-export function getSkillLevel(skillName: string, xp: number): LevelResult {
+/**
+ * @param maxLevelOverride Use for skills whose 51-60 range is gated behind a per-player unlock
+ * (Farming via Anita/Jacob medals, Taming via sacrificing pets to George) rather than always being
+ * 60 for everyone - see farmingLevelCap()/tamingLevelCap() in skillsParser.ts.
+ */
+export function getSkillLevel(skillName: string, xp: number, maxLevelOverride?: number): LevelResult {
   const key = skillName.toLowerCase();
-  const maxLevel = SKILL_MAX_LEVELS[key] ?? 50;
+  const maxLevel = maxLevelOverride ?? SKILL_MAX_LEVELS[key] ?? 50;
   const table = key === "runecrafting" || key === "social" ? SHORT_SKILL_XP_PER_LEVEL : STANDARD_SKILL_XP_PER_LEVEL;
   return levelFromTable(xp, table, Math.min(maxLevel, table.length));
 }
