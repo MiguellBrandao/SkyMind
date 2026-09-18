@@ -391,7 +391,8 @@ no Dockerfile/Compose changes needed on your end.
    The Minecraft-icon emoji sync needs no manual step here at all - it runs automatically every time
    the `app` container starts.
 8. (Optional) In **Domains**, attach a domain/subdomain to the `app` service's internal port `3000`
-   if you want `GET /health` reachable from outside for uptime monitoring - the bot itself
+   if you want `GET /health` reachable from outside for uptime monitoring, or want the marketing
+   page at `GET /` (`public/landing.html`) reachable as SkyMind's public website - the bot itself
    doesn't need a domain since Discord talks to it over an outbound WebSocket connection, not
    inbound HTTP.
 9. Check the `app` service's **Logs** tab: you should see `"SkyMind is online"` once it successfully

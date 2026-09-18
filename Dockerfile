@@ -20,5 +20,6 @@ COPY package.json package-lock.json* ./
 RUN npm install --omit=dev
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/drizzle ./drizzle
+COPY --from=build /app/public ./public
 EXPOSE 3000
 CMD ["node", "dist/src/index.js"]

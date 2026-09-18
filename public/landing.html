@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkyMind — AI Assistant for Hypixel SkyBlock</title>
+<meta name="description" content="SkyMind is an AI Discord assistant built exclusively for Hypixel SkyBlock: live profile stats, real net worth, and an agent that checks your account and the current wiki before it answers.">
+<meta property="og:title" content="SkyMind">
+<meta property="og:description" content="An AI Discord assistant built exclusively for Hypixel SkyBlock.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0a0e1c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8C%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0e1c;
+    --bg-1: #12182e;
+    --bg-2: #1a2140;
+    --rule: rgba(230, 233, 250, 0.09);
+    --rule-strong: rgba(230, 233, 250, 0.16);
+    --text: #e9ebfa;
+    --text-muted: #9aa1c7;
+    --text-faint: #676e99;
+    --gold: #f5a623;
+    --gold-dim: #b8801f;
+    --purple: #9b6fe0;
+    --blue: #5b9df0;
+    --grey: #b0b6d9;
+    --font-display: 'Silkscreen', monospace;
+    --font-body: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+  }
+
+  img { max-width: 100%; }
+  a { color: inherit; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+
+  /* background: faint starfield + island glow, painted once, static */
+  .sky {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse 700px 500px at 82% 8%, rgba(245, 166, 35, 0.10), transparent 60%),
+      radial-gradient(ellipse 500px 400px at 12% 60%, rgba(155, 111, 224, 0.08), transparent 60%),
+      var(--bg);
+  }
+  .sky::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(1.5px 1.5px at 20% 30%, rgba(233,235,250,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 65% 15%, rgba(233,235,250,0.4), transparent),
+      radial-gradient(1px 1px at 45% 70%, rgba(233,235,250,0.35), transparent),
+      radial-gradient(1.5px 1.5px at 85% 55%, rgba(233,235,250,0.4), transparent),
+      radial-gradient(1px 1px at 30% 85%, rgba(233,235,250,0.3), transparent),
+      radial-gradient(1.5px 1.5px at 92% 80%, rgba(233,235,250,0.35), transparent),
+      radial-gradient(1px 1px at 8% 12%, rgba(233,235,250,0.3), transparent);
+    background-repeat: repeat;
+    background-size: 600px 600px;
+  }
+
+  /* ---------- nav ---------- */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: 24px;
+  }
+  .mark {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .mark-icon {
+    display: grid;
+    grid-template-columns: repeat(3, 6px);
+    grid-template-rows: repeat(3, 6px);
+    gap: 2px;
+    flex: none;
+  }
+  .mark-icon i { display: block; background: var(--bg-2); }
+  .mark-icon i:nth-child(2) { background: var(--gold); }
+  .mark-icon i:nth-child(4) { background: var(--gold); }
+  .mark-icon i:nth-child(5) { background: var(--purple); }
+  .mark-icon i:nth-child(6) { background: var(--gold); }
+  .mark-icon i:nth-child(8) { background: var(--gold); }
+  .mark-word {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border: 1px solid var(--rule-strong);
+    border-radius: 100px;
+    padding: 6px 12px 6px 10px;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 0 3px rgba(245,166,35,0.18);
+  }
+
+  /* ---------- hero ---------- */
+  .hero {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 56px;
+    align-items: center;
+    padding-block: 56px 72px;
+  }
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; padding-block: 24px 48px; }
+  }
+
+  .hero-copy { animation: rise 0.7s cubic-bezier(.2,.8,.2,1) both; }
+  @media (prefers-reduced-motion: reduce) { .hero-copy, .chatpane, .btn-invite .dot { animation: none !important; } }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  h1.headline {
+    font-size: clamp(32px, 4.4vw, 52px);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+  }
+  h1.headline em {
+    font-style: normal;
+    color: var(--gold);
+  }
+
+  .sub {
+    margin-top: 18px;
+    max-width: 46ch;
+    font-size: 17px;
+    color: var(--text-muted);
+  }
+
+  .cta-row {
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .btn-invite {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--gold);
+    background: transparent;
+    border: 1.5px dashed var(--gold-dim);
+    border-radius: 8px;
+    padding: 13px 20px;
+    cursor: not-allowed;
+    user-select: none;
+  }
+  .btn-invite .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--gold);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .link-credit {
+    font-size: 14px;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-bottom: 1px solid var(--rule-strong);
+    padding-bottom: 1px;
+  }
+  .link-credit:hover { color: var(--text); border-color: var(--text-muted); }
+
+  /* ---------- mock discord chat ---------- */
+  .chatpane {
+    background: var(--bg-1);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 4px 18px 16px;
+    animation: rise 0.7s cubic-bezier(.2,.8,.2,1) 0.12s both;
+  }
+  .chatpane-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding-block: 14px;
+    border-bottom: 1px solid var(--rule);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+  .chatpane-head .hash { color: var(--text-faint); font-weight: 800; }
+
+  .msg { display: grid; grid-template-columns: 32px 1fr; gap: 12px; padding-block: 11px; }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+    flex: none;
+  }
+  .avatar-user { background: var(--bg-2); color: var(--text-muted); }
+  .avatar-bot { background: rgba(245,166,35,0.14); }
+  .avatar-mark { display: grid; grid-template-columns: repeat(3, 4px); grid-template-rows: repeat(3, 4px); gap: 1.5px; }
+  .avatar-mark i { display: block; }
+  .avatar-mark i:nth-child(2), .avatar-mark i:nth-child(4), .avatar-mark i:nth-child(6), .avatar-mark i:nth-child(8) { background: var(--gold); }
+  .avatar-mark i:nth-child(5) { background: var(--purple); }
+
+  .msg-meta { display: flex; align-items: baseline; gap: 8px; }
+  .msg-author { font-weight: 700; font-size: 13.5px; color: var(--text); }
+  .bot-tag {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.02em;
+    background: var(--purple); color: #fff;
+    border-radius: 3px; padding: 1px 5px;
+    transform: translateY(-1px);
+  }
+  .msg-time { font-size: 11px; color: var(--text-faint); }
+
+  .slash-line { margin-top: 3px; font-size: 13.5px; color: var(--text-muted); }
+  .slash-pill {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--gold);
+    background: rgba(245,166,35,0.10);
+    border: 1px solid rgba(245,166,35,0.25);
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-right: 4px;
+  }
+
+  .msg-text { margin: 3px 0 0; font-size: 13.5px; color: var(--text-muted); line-height: 1.55; max-width: 44ch; }
+  .msg-text b { color: var(--text); font-weight: 600; }
+
+  .embed {
+    margin-top: 8px;
+    background: var(--bg-2);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    padding: 13px 16px;
+    max-width: 320px;
+    width: 100%;
+  }
+  .embed-title { font-weight: 700; font-size: 13.5px; color: var(--text); }
+  .embed-stats { margin-top: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .embed-stat b { display: block; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 14px; color: var(--text); }
+  .embed-stat span { font-size: 9.5px; color: var(--text-faint); }
+
+  /* ---------- sections ---------- */
+  section { padding-block: 48px; border-top: 1px solid var(--rule); }
+
+  .section-head { max-width: 62ch; }
+  h2.section-title {
+    font-size: clamp(22px, 2.6vw, 28px);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+  .section-body {
+    margin-top: 14px;
+    color: var(--text-muted);
+    max-width: 64ch;
+    font-size: 15.5px;
+  }
+
+  /* feature tiers */
+  .tiers { margin-top: 36px; display: flex; flex-direction: column; }
+  .tier {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 24px;
+    padding-block: 22px;
+    border-top: 1px solid var(--rule);
+  }
+  .tier:last-child { border-bottom: 1px solid var(--rule); }
+  @media (max-width: 700px) {
+    .tier { grid-template-columns: 1fr; gap: 8px; }
+  }
+  .tier-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    height: fit-content;
+    padding-top: 2px;
+  }
+  .tier-tag b { display: block; font-family: var(--font-body); font-weight: 800; font-size: 16px; letter-spacing: -0.01em; margin-top: 4px; }
+  .tier[data-t="common"] .tier-tag { color: var(--grey); }
+  .tier[data-t="rare"] .tier-tag { color: var(--blue); }
+  .tier[data-t="epic"] .tier-tag { color: var(--purple); }
+  .tier[data-t="legendary"] .tier-tag { color: var(--gold); }
+
+  .tier-body h3 {
+    font-size: 16.5px;
+    font-weight: 700;
+  }
+  .tier-body p {
+    margin: 6px 0 0;
+    color: var(--text-muted);
+    font-size: 14.5px;
+    max-width: 58ch;
+  }
+  .tier-body code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg-1);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+
+  /* trust rows */
+  .trust { margin-top: 36px; display: flex; flex-direction: column; }
+  .trust-row {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 16px;
+    padding-block: 20px;
+    border-top: 1px solid var(--rule);
+  }
+  .trust-row:last-child { border-bottom: 1px solid var(--rule); }
+  .trust-mark {
+    width: 8px; height: 8px; margin-top: 7px;
+    background: var(--gold);
+    transform: rotate(45deg);
+  }
+  .trust-row h3 { font-size: 15.5px; font-weight: 700; }
+  .trust-row p { margin: 6px 0 0; color: var(--text-muted); font-size: 14.5px; max-width: 62ch; }
+
+  /* footer */
+  footer {
+    padding-block: 40px 56px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .foot-left { display: flex; flex-direction: column; gap: 6px; }
+  .foot-word { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--text-muted); }
+  .foot-disclaimer { font-size: 12.5px; color: var(--text-faint); max-width: 50ch; }
+  .foot-right { display: flex; align-items: center; gap: 18px; }
+
+  a:focus-visible, .btn-invite:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+</style>
+</head>
+<body>
+
+<div class="sky"></div>
+
+<div class="wrap">
+
+  <nav>
+    <div class="mark">
+      <div class="mark-icon"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <span class="mark-word">SKYMIND</span>
+    </div>
+    <div class="status-pill"><span class="status-dot"></span> Launching soon</div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-copy">
+      <h1 class="headline">It checks your profile <em>before</em> it answers.</h1>
+      <p class="sub">SkyMind is an AI assistant built only for Hypixel SkyBlock. Ask it about gear, grinding, or your own coins, and it pulls your real stats and the current wiki before it says a word.</p>
+      <div class="cta-row">
+        <span class="btn-invite" role="status" aria-label="Invite to Discord, coming soon"><span class="dot"></span> Invite to Discord — coming soon</span>
+        <a class="link-credit" href="https://github.com/MiguellBrandao/SkyMind" target="_blank" rel="noopener">View on GitHub ↗</a>
+      </div>
+    </div>
+
+    <div class="chatpane">
+      <div class="chatpane-head"><span class="hash">#</span> skymind-bot</div>
+
+      <div class="msg">
+        <div class="avatar avatar-user">C</div>
+        <div class="msg-body">
+          <div class="msg-meta"><span class="msg-author">CloudHopper</span><span class="msg-time">Today at 8:41 PM</span></div>
+          <div class="slash-line"><span class="slash-pill">/profile</span></div>
+        </div>
+      </div>
+
+      <div class="msg">
+        <div class="avatar avatar-bot"><div class="avatar-mark"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <div class="msg-body">
+          <div class="msg-meta"><span class="msg-author">SkyMind</span><span class="bot-tag">BOT</span><span class="msg-time">8:41 PM</span></div>
+          <div class="embed">
+            <div class="embed-title">CloudHopper · SkyBlock Level 287</div>
+            <div class="embed-stats">
+              <div class="embed-stat"><b>412.6M</b><span>NET WORTH</span></div>
+              <div class="embed-stat"><b>38.2</b><span>SKILL AVG</span></div>
+              <div class="embed-stat"><b>Cata 31</b><span>DUNGEONS</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="msg">
+        <div class="avatar avatar-user">C</div>
+        <div class="msg-body">
+          <div class="msg-meta"><span class="msg-author">CloudHopper</span><span class="msg-time">8:42 PM</span></div>
+          <div class="slash-line"><span class="slash-pill">/ask</span> message: fastest way to raise my magical power right now</div>
+        </div>
+      </div>
+
+      <div class="msg">
+        <div class="avatar avatar-bot"><div class="avatar-mark"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <div class="msg-body">
+          <div class="msg-meta"><span class="msg-author">SkyMind</span><span class="bot-tag">BOT</span><span class="msg-time">8:42 PM</span></div>
+          <p class="msg-text">Checked your Accessory Bag — you're at <b>640 MP</b>. Cheapest jump: upgrade your Hegemony Artifact to Legendary, <b>~42M</b> on the Bazaar right now, for +60 MP.</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-head">
+      <h2 class="section-title">Not another stats card.</h2>
+      <p class="section-body">Most SkyBlock bots show you a screenshot of your own profile. SkyMind is a real agent — it decides what to look up, fetches it live from Hypixel, and writes the answer itself. Ask a question the way you'd ask a friend who actually plays: "is this worth upgrading," "what am I missing for M6," "how much would this cost right now."</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2 class="section-title">What it does</h2>
+    </div>
+    <div class="tiers">
+      <div class="tier" data-t="common">
+        <div class="tier-tag">TIER<b>Common</b></div>
+        <div class="tier-body">
+          <h3><code>/profile</code> &nbsp;<code>/stats</code></h3>
+          <p>Level, real Minecraft item icons, skills, dungeon classes, slayers, equipment — for you or anyone by username.</p>
+        </div>
+      </div>
+      <div class="tier" data-t="rare">
+        <div class="tier-tag">TIER<b>Rare</b></div>
+        <div class="tier-body">
+          <h3><code>/networth</code></h3>
+          <p>A real net worth calculation, broken down by armor, accessories, pets, and museum — not a rough guess.</p>
+        </div>
+      </div>
+      <div class="tier" data-t="epic">
+        <div class="tier-tag">TIER<b>Epic</b></div>
+        <div class="tier-body">
+          <h3><code>/ask</code></h3>
+          <p>A tool-calling agent that reads your live profile, checks current Bazaar and Auction House prices, and searches the SkyBlock Wiki and community discussion before it answers — never a guess dressed up as fact.</p>
+        </div>
+      </div>
+      <div class="tier" data-t="legendary">
+        <div class="tier-tag">TIER<b>Legendary</b></div>
+        <div class="tier-body">
+          <h3><code>/link</code></h3>
+          <p>Proves it's your account using a setting already in your SkyBlock menu. No password, no Microsoft login, no API key of yours, ever.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2 class="section-title">Built properly, not just fast</h2>
+    </div>
+    <div class="trust">
+      <div class="trust-row">
+        <div class="trust-mark"></div>
+        <div>
+          <h3>No passwords, ever.</h3>
+          <p>Linking works by matching a code against a field already in your Hypixel account settings. SkyMind never asks for a Minecraft, Microsoft, or Discord password, and never asks you for your own Hypixel API key.</p>
+        </div>
+      </div>
+      <div class="trust-row">
+        <div class="trust-mark"></div>
+        <div>
+          <h3>Live data, respectfully cached.</h3>
+          <p>Every number comes from Hypixel's Public API at the moment you ask. Responses are cached only briefly — Bazaar for under a minute, auctions for two — to stay well under rate limits, never to build a long-term history of anyone's stats.</p>
+        </div>
+      </div>
+      <div class="trust-row">
+        <div class="trust-mark"></div>
+        <div>
+          <h3>Independent, not official.</h3>
+          <p>SkyMind is a fan-made project and is not affiliated with or endorsed by Hypixel Inc. or Mojang Studios.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot-left">
+      <span class="foot-word">SKYMIND</span>
+      <span class="foot-disclaimer">Not affiliated with or endorsed by Hypixel Inc. or Mojang Studios. Minecraft is a trademark of Mojang Studios.</span>
+    </div>
+    <div class="foot-right">
+      <span class="btn-invite" role="status" aria-label="Invite to Discord, coming soon"><span class="dot"></span> Coming soon</span>
+      <a class="link-credit" href="https://github.com/MiguellBrandao/SkyMind" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
